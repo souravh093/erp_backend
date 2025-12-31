@@ -4,227 +4,585 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
+// Authentication and Access Control
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @db.VarChar(100)
+  email          String          @unique @db.VarChar(255)
+  phone          String?         @unique @db.VarChar(20)
+  password       String          @db.VarChar(255)
+  is_Active      Boolean         @default(true)
+  avatar         String?         @db.Text
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(6)
+  userRoles      UserRole[]
+  userBranches   UserBranch[]
+  stockMovements StockMovement[]
 
-model AdminUser {
-  id          String   @id @default(uuid())
-  name        String
-  email       String   @unique
-  password    String
-  phoneNumber String?  @unique
-  role        String   @default("admin")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  @@map("users")
 }
 
-// Coaching Management Portal Models
-model Course {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  subjects        Subject[]
-  students        Student[]
-  examForStudents ExamForStudent[]
+model Role {
+  id              String           @id @default(uuid()) @db.Uuid
+  role_name       String           @unique @db.VarChar(100)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
 }
 
-model Subject {
-  id              String           @id @default(uuid())
-  name            String
-  courseId        String
-  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  examForStudents ExamForStudent[]
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String   @db.Uuid
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
 }
 
-model Room {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  students  Student[]
+model Permission {
+  id              String           @id @default(uuid()) @db.Uuid
+  permission      String           @unique @db.VarChar(100)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
 }
 
-enum StudentBloodGroup {
-  A_Positive
-  A_Negative
-  B_Positive
-  B_Negative
-  AB_Positive
-  AB_Negative
-  O_Positive
-  O_Negative
+model RolePermission {
+  id           String     @id @default(uuid()) @db.Uuid
+  roleId       String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @db.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(6)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
 }
 
-enum StudentReligion {
-  Islam
-  Hinduism
-  Christianity
-  Buddhism
-  Other
+// Company & Branch Management
+
+enum BusinessType {
+  SHOP
+  RESTAURANT
+  PHARMACY
+  HOTEL
+  CLINIC
+  GYM
+  SALON
+  WAREHOUSE
+  FACTORY
+  OFFICE
 }
 
-enum StudentBatch {
-  A
-  B
-  C
-  D
+enum Currency {
+  USD
+  EUR
+  INR
+  BDT
 }
 
-enum StudentStatus {
-  Running
-  Leave
+model Company {
+  id                      String       @id @default(uuid()) @db.Uuid
+  name                    String       @db.VarChar(255)
+  business_type           BusinessType
+  trade_license_number    String?      @db.VarChar(100)
+  vat_registration_number String?      @db.VarChar(100)
+  address                 String?      @db.Text
+  phone                   String?      @db.VarChar(20)
+  email                   String?      @db.VarChar(255)
+  currency_default        Currency     @default(BDT)
+  createdAt               DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime     @updatedAt @db.Timestamptz(6)
+  branches                Branch[]
+  categories              Category[]
+  products                Product[]
+  customers               Customer[]
+
+  @@unique([phone, email, trade_license_number, vat_registration_number])
+  @@map("companies")
 }
 
-enum StudentType {
-  Coaching
-  Both
+model Branch {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @db.VarChar(255)
+  address         String?          @db.Text
+  phone           String?          @db.VarChar(20)
+  email           String?          @db.VarChar(255)
+  is_active       Boolean          @default(true)
+  companyId       String           @db.Uuid
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  userBranches    UserBranch[]
+  stocks          Stock[]
+  stockMovements  StockMovement[]
+  purchaseOrders  PurchaseOrder[]
+  salesOrders     SalesOrder[]
+  salesInvoices   SalesInvoice[]
+  vatTransactions VatTransaction[]
+
+  @@unique([phone, email])
+  @@map("branches")
 }
 
-model Student {
-  id                     String                   @id @default(uuid())
-  studentId              String                   @unique
-  name                   String
-  fatherName             String
-  motherName             String
-  phoneNumber            String                   @unique
-  studentGuardian        StudentGuardian?
-  nidNumber              String?                  @unique
-  studentType            StudentType
-  dobNumber              String?                  @unique
-  courseId               String
-  photoUrl               String?                  @db.LongText
-  status                 StudentStatus            @default(Running)
-  roomId                 String?
-  room                   Room?                    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  batch                  StudentBatch?
-  course                 Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  bloodGroup             StudentBloodGroup?
-  religion               StudentReligion?
-  studentAddress         StudentAddress?
-  studentEducations      StudentEducation[]
-  studentReferredBy      StudentReferredBy?
-  studentFavoriteTeacher StudentFavoriteTeacher[]
-  studentPayments        StudentPayment?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
-  eachStudentExamResults EachStudentExamResult[]
+model UserBranch {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId  String   @db.Uuid
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("user_branches")
 }
 
-model StudentGuardian {
-  id                String  @id @default(uuid())
-  name              String
-  phoneNumber       String  @unique
-  relationship      String
-  localName         String?
-  localPhoneNumber  String? @unique
-  localRelationship String?
-  studentId         String  @unique
-  student           Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+// Product & Inventory Management
+model Category {
+  id            String        @id @default(uuid()) @db.Uuid
+  name          String        @db.VarChar(100)
+  description   String?       @db.Text
+  companyId     String        @db.Uuid
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(6)
+  subCategories SubCategory[]
+  products      Product[]
+
+  @@map("categories")
 }
 
-model StudentAddress {
-  id          String  @id @default(uuid())
-  village     String
-  postOffice  String
-  subDistrict String
-  district    String
-  studentId   String  @unique
-  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+model SubCategory {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  categoryId  String    @db.Uuid
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+  products    Product[]
+
+  @@map("sub_categories")
 }
 
-model StudentEducation {
-  id              String  @id @default(uuid())
-  examinationName String
-  board           String
-  passingYear     Int
-  institutionName String
-  gpa             Float
-  studentId       String
-  student         Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+model Unit {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String    @db.VarChar(50)
+  conversion_base_unit String?   @db.VarChar(50)
+  createdAt            DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @db.Timestamptz(6)
+  products             Product[]
+
+  @@map("units")
 }
 
-model StudentReferredBy {
-  id            String  @id @default(uuid())
-  referrerName  String?
-  referrerPhone String? @unique
-  studentId     String  @unique
-  student       Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+enum ProductType {
+  GOODS
+  SERVICE
 }
 
-model StudentFavoriteTeacher {
-  id        String  @id @default(uuid())
-  name      String
-  number    String  @unique
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+model Product {
+  id                   String                @id @default(uuid()) @db.Uuid
+  name                 String                @db.VarChar(255)
+  description          String?               @db.Text
+  sku                  String?               @unique @db.VarChar(100)
+  barcode              String?               @unique @db.VarChar(100)
+  unitId               String                @db.Uuid
+  unit                 Unit                  @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  productType          ProductType           @default(GOODS)
+  is_active            Boolean               @default(true)
+  companyId            String                @db.Uuid
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categoryId           String                @db.Uuid
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subCategoryId        String?               @db.Uuid
+  subCategory          SubCategory?          @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+  createdAt            DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @db.Timestamptz(6)
+  productPricing       ProductPricing?
+  stocks               Stock[]
+  stockMovements       StockMovement[]
+  purchaseOrderItems   PurchaseOrderItem[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  salesInvoiceItems    SalesInvoiceItem[]
+
+  @@map("products")
 }
 
-model StudentPayment {
-  id                          String                      @id @default(uuid())
-  totalAmount                 Float
-  flatDiscount                Float                       @default(0)
-  dueAmount                   Float                       @default(0)
-  serviceCharge               Float                       @default(0)
-  studentId                   String                      @unique
-  student                     Student                     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  studentPaymentPaidHistories StudentPaymentPaidHistory[]
-  studentPaymentInvoices      StudentPaymentInvoice[]
+model ProductPricing {
+  id                    String   @id @default(uuid()) @db.Uuid
+  purchase_price        Float
+  selling_price         Float
+  vat_rate_percent      Int
+  discount_rate_percent Int      @default(0)
+  productId             String   @unique @db.Uuid
+  product               Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  allow_discount        Boolean  @default(false)
+  effective_from        DateTime @default(now()) @db.Timestamptz(6)
+  createdAt             DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("product_pricing")
+}
+
+model Stock {
+  id               String   @id @default(uuid()) @db.Uuid
+  current_quantity Int      @default(0)
+  reorder_level    Int      @default(0)
+  branchId         String   @db.Uuid
+  branch           Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  productId        String   @db.Uuid
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("stocks")
+}
+
+enum StockMovementReason {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  TRANSFER
+  EXPIRE
+  MANUAL
+}
+
+model StockMovement {
+  id               String              @id @default(uuid()) @db.Uuid
+  quantity_changed Int
+  reason           String              @db.Text
+  reason_type      StockMovementReason
+  reference_id     String?             @db.Uuid
+  reference        User?               @relation(fields: [reference_id], references: [id], onDelete: Cascade)
+  productId        String              @db.Uuid
+  product          Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  branchId         String              @db.Uuid
+  branch           Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt        DateTime            @default(now()) @db.Timestamptz(6)
+
+  @@map("stock_movements")
+}
+
+// Purchase & Sales Management
+
+model Supplier {
+  id              String          @id @default(uuid()) @db.Uuid
+  name            String          @db.VarChar(255)
+  phone           String?         @db.VarChar(20)
+  email           String?         @db.VarChar(255)
+  address         String?         @db.Text
+  vat_registered  Boolean         @default(false)
+  opening_balance Float           @default(0)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(6)
+  purchaseOrders  PurchaseOrder[]
+
+  @@unique([phone, email])
+  @@map("suppliers")
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  PARTIAL
+  COMPLETED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id                 String              @id @default(uuid()) @db.Uuid
+  order_date         DateTime            @default(now()) @db.Timestamptz(6)
+  expected_date      DateTime?           @db.Timestamptz(6)
+  status             PurchaseOrderStatus @default(PENDING)
+  total_amount       Float
+  total_vat          Float?
+  grand_total        Float
+  supplierId         String              @db.Uuid
+  supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  branchId           String              @db.Uuid
+  branch             Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt          DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime            @updatedAt @db.Timestamptz(6)
+  purchaseOrderItems PurchaseOrderItem[]
+  purchaseInvoices   PurchaseInvoice[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(uuid()) @db.Uuid
+  quantity         Int
+  unit_price       Float
+  vat_rate_percent Int           @default(0)
+  line_total       Float
+  purchaseOrderId  String        @db.Uuid
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId        String        @db.Uuid
+  product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt        DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime      @updatedAt @db.Timestamptz(6)
+
+  @@map("purchase_order_items")
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
 }
 
 enum PaymentMethod {
-  Cash
-  Rocket
-  Bkash
-  Nagad
-  Upay
-  BankTransfer
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  MOBILE_PAYMENT
 }
 
-model StudentPaymentPaidHistory {
-  id             String         @id @default(uuid())
-  paidAmount     Float
-  paymentNote    String
-  paymentMethod  PaymentMethod
-  transactionId  String?
-  paymentId      String
-  studentPayment StudentPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+model PurchaseInvoice {
+  id                   String                @id @default(uuid()) @db.Uuid
+  purchaseOrderId      String                @db.Uuid
+  purchaseOrder        PurchaseOrder         @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  invoice_date         DateTime              @default(now()) @db.Timestamptz(6)
+  total_before_vat     Float
+  total_vat            Float                 @default(0)
+  grand_total          Float
+  payment_status       PaymentStatus         @default(UNPAID)
+  payment_method       PaymentMethod?
+  createdAt            DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @db.Timestamptz(6)
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+
+  @@map("purchase_invoices")
 }
 
-model StudentPaymentInvoice {
-  id               String         @id @default(uuid())
-  invoiceNumber    String         @unique
-  studentPaymentId String
-  studentPayment   StudentPayment @relation(fields: [studentPaymentId], references: [id], onDelete: Cascade)
+model PurchaseInvoiceItem {
+  id                String          @id @default(uuid()) @db.Uuid
+  batchNumber       String?         @db.VarChar(100)
+  expiryDate        DateTime?       @db.Timestamptz(6)
+  quantity          Int
+  unitPrice         Float
+  vatRatePercent    Int             @default(0)
+  lineTotal         Float
+  purchaseInvoiceId String          @db.Uuid
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  productId         String          @db.Uuid
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(6)
+
+  @@map("purchase_invoice_items")
 }
 
-model ExamForStudent {
-  id                     String                  @id @default(uuid())
-  courseId               String
-  course                 Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  subjectId              String
-  subject                Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  examDate               DateTime
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  eachStudentExamResults EachStudentExamResult[]
+// Sales / POS module
+
+model Customer {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String         @db.VarChar(255)
+  phone           String?        @db.VarChar(20)
+  email           String?        @db.VarChar(255)
+  address         String?        @db.Text
+  opening_balance Float          @default(0)
+  companyId       String         @db.Uuid
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(6)
+  salesOrders     SalesOrder[]
+  salesInvoices   SalesInvoice[]
+
+  @@unique([phone, email])
+  @@map("customers")
 }
 
-model EachStudentExamResult {
-  id               String         @id @default(uuid())
-  examForStudentId String
-  examForStudent   ExamForStudent @relation(fields: [examForStudentId], references: [id], onDelete: Cascade)
-  studentId        String
-  student          Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  marks            Float
-  outOfMarks       Float
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+enum OrderType {
+  COUNTER
+  TABLE
+  DELIVERY
+  TAKEAWAY
 }
 
-// Hostel Management Portal Models
+enum OrderStatus {
+  PENDING
+  SERVED
+  COMPLETED
+  CANCELLED
+  PARTIAL
+}
+
+model SalesOrder {
+  id            String         @id @default(uuid()) @db.Uuid
+  branchId      String         @db.Uuid
+  branch        Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  customerId    String?        @db.Uuid
+  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order_type    OrderType      @default(COUNTER)
+  order_status  OrderStatus    @default(PENDING)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+  salesInvoices SalesInvoice[]
+}
+
+model SalesInvoice {
+  id                String             @id @default(uuid()) @db.Uuid
+  salesOrderId      String?            @db.Uuid
+  salesOrder        SalesOrder?        @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  invoice_number    String             @unique @db.VarChar(100)
+  branchId          String             @db.Uuid
+  branch            Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  customerId        String?            @db.Uuid
+  customer          Customer?          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  invoice_date      DateTime           @default(now()) @db.Timestamptz(6)
+  total_before_vat  Float
+  total_discount    Float              @default(0)
+  total_vat         Float              @default(0)
+  grand_total       Float
+  payment_amount    Float
+  due_amount        Float              @default(0)
+  payment_status    PaymentStatus      @default(UNPAID)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(6)
+  salesInvoiceItems SalesInvoiceItem[]
+
+  @@map("sales_invoices")
+}
+
+model SalesInvoiceItem {
+  id                    String       @id @default(uuid()) @db.Uuid
+  salesInvoiceId        String       @db.Uuid
+  salesInvoice          SalesInvoice @relation(fields: [salesInvoiceId], references: [id], onDelete: Cascade)
+  productId             String       @db.Uuid
+  product               Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity              Int
+  unit_price            Float
+  vat_rate_percent      Int          @default(0)
+  line_total            Float
+  discount_rate_percent Int          @default(0)
+  createdAt             DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime     @updatedAt @db.Timestamptz(6)
+
+  @@map("sales_invoice_items")
+}
+
+// Payment & Ledger Management
+
+enum ReferenceType {
+  PURCHASE_INVOICE
+  SALES_INVOICE
+  EXPENSE_INVOICE
+  PURCHASE_ORDER
+  SALES_ORDER
+  EXPENSE
+  OTHER
+}
+
+model Payment {
+  id             String        @id @default(uuid()) @db.Uuid
+  reference_type ReferenceType
+  payment_method PaymentMethod
+  amount         Float
+  date           DateTime      @default(now()) @db.Timestamptz(6)
+  currency       Currency      @default(BDT)
+  notes          String?       @db.Text
+  reference_id   String        @db.Uuid
+  createdAt      DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(6)
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+  EQUITY
+}
+
+model Account {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(255)
+  type         AccountType
+  createdAt    DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(6)
+  journalLines JournalLine[]
+
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id           String        @id @default(uuid()) @db.Uuid
+  date         DateTime      @default(now()) @db.Timestamptz(6)
+  description  String?       @db.Text
+  createdBy    String        @db.Uuid
+  createdAt    DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(6)
+  journalLines JournalLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id             String       @id @default(uuid()) @db.Uuid
+  journalEntryId String       @db.Uuid
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String       @db.Uuid
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(6)
+
+  @@map("journal_lines")
+}
+
+// Vat & Tax Management
+enum ApplicableType {
+  PRODUCT
+  SERVICE
+  CATEGORY
+}
+
+model TaxRate {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @db.VarChar(100)
+  percentage      Float
+  applicable_type ApplicableType
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  vatTransactions VatTransaction[]
+
+  @@map("tax_rates")
+}
+
+enum SourceType {
+  SALE
+  PURCHASE
+}
+
+model VatTransaction {
+  id          String     @id @default(uuid()) @db.Uuid
+  source_type SourceType
+  source_id   String     @db.Uuid
+  branchId    String     @db.Uuid
+  branch      Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  taxRateId   String     @db.Uuid
+  taxRate     TaxRate    @relation(fields: [taxRateId], references: [id], onDelete: Cascade)
+  vat_amount  Float
+  date        DateTime   @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(6)
+
+  @@map("vat_transactions")
+}
+
