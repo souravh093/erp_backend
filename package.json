@@ -1,0 +1,47 @@
+{
+  "name": "server",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "This is find anyting and give back original people web application",
+  "main": "./dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start:prod": "node ./dist/app.js",
+    "start:dev": "tsx watch ./src/app.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
+    "prettier:fix": "prettier --write src"
+  },
+  "author": "Universal",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
+    "sharp": "^0.34.4",
+    "zod": "^3.25.30"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.19.3",
+    "@types/nodemailer": "^7.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "eslint": "^9.27.0",
+    "prettier": "^3.5.3",
+    "prisma": "^7.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.3"
+  }
+}

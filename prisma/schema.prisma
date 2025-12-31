@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+
+model AdminUser {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  phoneNumber String?  @unique
+  role        String   @default("admin")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Coaching Management Portal Models
+model Course {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  subjects        Subject[]
+  students        Student[]
+  examForStudents ExamForStudent[]
+}
+
+model Subject {
+  id              String           @id @default(uuid())
+  name            String
+  courseId        String
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  examForStudents ExamForStudent[]
+}
+
+model Room {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  students  Student[]
+}
+
+enum StudentBloodGroup {
+  A_Positive
+  A_Negative
+  B_Positive
+  B_Negative
+  AB_Positive
+  AB_Negative
+  O_Positive
+  O_Negative
+}
+
+enum StudentReligion {
+  Islam
+  Hinduism
+  Christianity
+  Buddhism
+  Other
+}
+
+enum StudentBatch {
+  A
+  B
+  C
+  D
+}
+
+enum StudentStatus {
+  Running
+  Leave
+}
+
+enum StudentType {
+  Coaching
+  Both
+}
+
+model Student {
+  id                     String                   @id @default(uuid())
+  studentId              String                   @unique
+  name                   String
+  fatherName             String
+  motherName             String
+  phoneNumber            String                   @unique
+  studentGuardian        StudentGuardian?
+  nidNumber              String?                  @unique
+  studentType            StudentType
+  dobNumber              String?                  @unique
+  courseId               String
+  photoUrl               String?                  @db.LongText
+  status                 StudentStatus            @default(Running)
+  roomId                 String?
+  room                   Room?                    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  batch                  StudentBatch?
+  course                 Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  bloodGroup             StudentBloodGroup?
+  religion               StudentReligion?
+  studentAddress         StudentAddress?
+  studentEducations      StudentEducation[]
+  studentReferredBy      StudentReferredBy?
+  studentFavoriteTeacher StudentFavoriteTeacher[]
+  studentPayments        StudentPayment?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  eachStudentExamResults EachStudentExamResult[]
+}
+
+model StudentGuardian {
+  id                String  @id @default(uuid())
+  name              String
+  phoneNumber       String  @unique
+  relationship      String
+  localName         String?
+  localPhoneNumber  String? @unique
+  localRelationship String?
+  studentId         String  @unique
+  student           Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentAddress {
+  id          String  @id @default(uuid())
+  village     String
+  postOffice  String
+  subDistrict String
+  district    String
+  studentId   String  @unique
+  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentEducation {
+  id              String  @id @default(uuid())
+  examinationName String
+  board           String
+  passingYear     Int
+  institutionName String
+  gpa             Float
+  studentId       String
+  student         Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentReferredBy {
+  id            String  @id @default(uuid())
+  referrerName  String?
+  referrerPhone String? @unique
+  studentId     String  @unique
+  student       Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentFavoriteTeacher {
+  id        String  @id @default(uuid())
+  name      String
+  number    String  @unique
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentPayment {
+  id                          String                      @id @default(uuid())
+  totalAmount                 Float
+  flatDiscount                Float                       @default(0)
+  dueAmount                   Float                       @default(0)
+  serviceCharge               Float                       @default(0)
+  studentId                   String                      @unique
+  student                     Student                     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentPaymentPaidHistories StudentPaymentPaidHistory[]
+  studentPaymentInvoices      StudentPaymentInvoice[]
+}
+
+enum PaymentMethod {
+  Cash
+  Rocket
+  Bkash
+  Nagad
+  Upay
+  BankTransfer
+}
+
+model StudentPaymentPaidHistory {
+  id             String         @id @default(uuid())
+  paidAmount     Float
+  paymentNote    String
+  paymentMethod  PaymentMethod
+  transactionId  String?
+  paymentId      String
+  studentPayment StudentPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model StudentPaymentInvoice {
+  id               String         @id @default(uuid())
+  invoiceNumber    String         @unique
+  studentPaymentId String
+  studentPayment   StudentPayment @relation(fields: [studentPaymentId], references: [id], onDelete: Cascade)
+}
+
+model ExamForStudent {
+  id                     String                  @id @default(uuid())
+  courseId               String
+  course                 Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  subjectId              String
+  subject                Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  examDate               DateTime
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  eachStudentExamResults EachStudentExamResult[]
+}
+
+model EachStudentExamResult {
+  id               String         @id @default(uuid())
+  examForStudentId String
+  examForStudent   ExamForStudent @relation(fields: [examForStudentId], references: [id], onDelete: Cascade)
+  studentId        String
+  student          Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  marks            Float
+  outOfMarks       Float
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+// Hostel Management Portal Models
