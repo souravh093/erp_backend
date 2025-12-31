@@ -4,7 +4,7 @@ import config from './app/configs';
 import router from './app/routes';
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
 import notFoundErrorHandler from './app/middlewares/notFoundErrorHandler';
-import seedData from './db/seedData';
+// import seedData from './db/seedData';
 import path from 'path';
 import { fileURLToPath } from 'url'; // Required for ES modules
 
@@ -39,12 +39,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Home route
+// Home route - serves the HTML page
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Welcome to the Part Timer Backend!',
-  });
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Importing routes
@@ -58,6 +55,6 @@ app.use(notFoundErrorHandler);
 
 // Running the server
 app.listen(config.port, async () => {
-  await seedData();
+  // await seedData();
   console.log(`Server is running on port ${config.port}`);
-}); 
+});
