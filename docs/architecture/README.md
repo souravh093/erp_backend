@@ -11,11 +11,14 @@ This document provides a comprehensive overview of the system architecture for b
 3. [Backend Architecture](#backend-architecture)
 4. [Frontend Architecture](#frontend-architecture)
 5. [Data Flow](#data-flow)
-6. [Technology Stack](#technology-stack)
-7. [Core Modules](#core-modules)
-8. [Database Design](#database-design)
-9. [API Conventions](#api-conventions)
-10. [Security Architecture](#security-architecture)
+6. [User Flows & Business Setup](#user-flows--business-setup)
+7. [Business Management by Type](#business-management-by-type)
+8. [Manager Dashboard & Controls](#manager-dashboard--controls)
+9. [Technology Stack](#technology-stack)
+10. [Core Modules](#core-modules)
+11. [Database Design](#database-design)
+12. [API Conventions](#api-conventions)
+13. [Security Architecture](#security-architecture)
 
 ---
 
@@ -478,6 +481,1204 @@ FRONTEND                          BACKEND                        DATABASE
     │  - Show success message         │                              │
     │  - Update state                 │                              │
     │  - Redirect or refresh list     │                              │
+```
+
+---
+
+## User Flows & Business Setup
+
+### 1. Initial System Setup Flow (Admin/Owner)
+
+#### Step 1: User Registration
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  New User Registration                                  │
+├─────────────────────────────────────────────────────────┤
+│  1. User visits system landing page                     │
+│  2. Click "Register" button                             │
+│  3. Fill registration form:                             │
+│     - Full Name                                         │
+│     - Email                                             │
+│     - Phone                                             │
+│     - Password (hashed with bcryptjs)                   │
+│  4. Email verification (optional)                       │
+│  5. Account created                                     │
+│  6. User redirected to login                            │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Database Operations**:
+
+```
+INSERT INTO users (id, name, email, phone, password, is_Active)
+VALUES (uuid(), ?, ?, ?, bcrypt(?), true);
+```
+
+#### Step 2: Company Creation
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Create First Company                                      │
+├────────────────────────────────────────────────────────────┤
+│  1. User logs in successfully                             │
+│  2. Dashboard prompts: "Create your first company"        │
+│  3. Fill Company Form:                                    │
+│     ┌─ Company Name                                       │
+│     ├─ Business Type (SELECT):                           │
+│     │  ├─ Shop                                            │
+│     │  ├─ Restaurant                                      │
+│     │  ├─ Pharmacy                                        │
+│     │  ├─ Hotel                                           │
+│     │  ├─ Clinic                                          │
+│     │  ├─ Gym                                             │
+│     │  ├─ Salon                                           │
+│     │  ├─ Warehouse                                       │
+│     │  ├─ Factory                                         │
+│     │  └─ Office                                          │
+│     ├─ Trade License Number                              │
+│     ├─ VAT Registration Number                           │
+│     ├─ Address                                           │
+│     ├─ Phone                                             │
+│     ├─ Email                                             │
+│     └─ Default Currency (USD/EUR/INR/BDT)               │
+│  4. Submit & Create                                      │
+│  5. Company created successfully                         │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Database Operations**:
+
+```
+INSERT INTO companies
+(id, name, business_type, trade_license_number, vat_registration_number,
+ address, phone, email, currency_default)
+VALUES (uuid(), ?, ?, ?, ?, ?, ?, ?, 'BDT');
+
+-- Assign user to company
+INSERT INTO users (id) ... [already created]
+```
+
+#### Step 3: Branch Creation
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Create Branches                                           │
+├────────────────────────────────────────────────────────────┤
+│  1. Navigate to Settings > Branches                        │
+│  2. Click "Add Branch"                                     │
+│  3. Fill Branch Form:                                      │
+│     - Branch Name (e.g., "Main Store", "Downtown Branch") │
+│     - Address                                             │
+│     - Phone                                               │
+│     - Email                                               │
+│     - Is Active (Yes/No)                                  │
+│  4. Submit & Create                                       │
+│  5. Branch linked to company                              │
+│                                                            │
+│  Can Create Multiple Branches:                            │
+│  - Headquarters                                           │
+│  - Regional Branches                                      │
+│  - Sub-branches                                           │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Database Operations**:
+
+```
+INSERT INTO branches (id, name, address, phone, email, is_active, companyId)
+VALUES (uuid(), ?, ?, ?, ?, true, ?);
+```
+
+#### Step 4: Role & Permission Setup
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Configure Roles & Permissions                             │
+├────────────────────────────────────────────────────────────┤
+│  1. Navigate to Settings > Roles & Permissions            │
+│  2. System comes with default roles:                      │
+│     ├─ Admin (All permissions)                            │
+│     ├─ Manager (Branch/Department management)             │
+│     ├─ Supervisor (Team lead)                             │
+│     ├─ Staff (Basic operations)                           │
+│     └─ Viewer (Read-only access)                          │
+│  3. Create Custom Roles (if needed)                        │
+│  4. Assign Permissions to Roles:                          │
+│     - user.create, user.read, user.update, user.delete   │
+│     - product.create, product.read, product.update       │
+│     - sales.create, sales.read, sales.update, sales.delete│
+│     - purchase.create, purchase.read, etc.                │
+│     - report.read, inventory.update, etc.                 │
+│  5. Save Configuration                                    │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Database Operations**:
+
+```
+INSERT INTO roles (id, role_name) VALUES (uuid(), 'Manager');
+
+INSERT INTO permissions (id, permission)
+VALUES
+  (uuid(), 'sales.create'),
+  (uuid(), 'sales.read'),
+  (uuid(), 'inventory.update');
+
+INSERT INTO role_permissions (id, roleId, permissionId)
+VALUES (uuid(), ?, ?);
+```
+
+#### Step 5: User Assignment
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Assign Users to Roles & Branches                          │
+├────────────────────────────────────────────────────────────┤
+│  1. Navigate to Settings > Users                           │
+│  2. Click "Add User" or invite existing user              │
+│  3. Assign User Details:                                  │
+│     - Select User                                         │
+│     - Select Role(s)                                      │
+│     - Select Branch(es)                                   │
+│  4. Save Assignment                                        │
+│                                                            │
+│  Example Assignments:                                     │
+│  ├─ John (Admin) → All Branches → All Permissions        │
+│  ├─ Sarah (Manager) → Branch 1 → Manager Permissions     │
+│  ├─ Mike (Cashier) → Branch 1 → Sales Permissions        │
+│  └─ Lisa (Accountant) → All Branches → Accounting        │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Database Operations**:
+
+```
+INSERT INTO user_roles (id, userId, roleId) VALUES (uuid(), ?, ?);
+INSERT INTO user_branches (id, userId, branchId) VALUES (uuid(), ?, ?);
+```
+
+### 2. Daily Business Operations Flow
+
+#### For Shop/Retail Business
+
+```
+MORNING (Opening)
+    │
+    ▼
+┌──────────────────────────────────┐
+│  1. Manager/Cashier Login        │
+│     - Enter credentials          │
+│     - JWT token generated        │
+│     - Assigned branch loaded     │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  2. Dashboard View               │
+│     - Today's sales target       │
+│     - Current stock status       │
+│     - Low stock alerts           │
+│     - Recent transactions        │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  3. Setup POS Terminal           │
+│     - Load product database      │
+│     - Initialize payment methods │
+│     - Check cash register        │
+└──────────┬───────────────────────┘
+
+DURING BUSINESS HOURS
+    │
+    ├─ SALES TRANSACTION
+    │  ├─ Customer arrives
+    │  ├─ Cashier creates sales order
+    │  ├─ Scan/Select products
+    │  ├─ Apply discounts (if authorized)
+    │  ├─ Calculate tax & total
+    │  ├─ Process payment
+    │  ├─ Generate invoice
+    │  ├─ Stock updated automatically
+    │  └─ Customer receives receipt
+    │
+    ├─ STOCK CHECK
+    │  ├─ Staff checks stock levels
+    │  ├─ Low stock items flagged
+    │  ├─ Manager notified
+    │  └─ Purchase order created if needed
+    │
+    ├─ CUSTOMER INQUIRIES
+    │  ├─ Check product availability
+    │  ├─ Check pricing
+    │  └─ Process special orders
+    │
+    └─ REFUNDS/RETURNS
+       ├─ Verify purchase
+       ├─ Accept item back
+       ├─ Process refund/credit
+       └─ Stock adjusted
+
+EVENING (Closing)
+    │
+    ▼
+┌──────────────────────────────────┐
+│  1. End of Day Reconciliation    │
+│     - Total sales count          │
+│     - Payment verification       │
+│     - Discrepancies noted        │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  2. Generate Daily Report        │
+│     - Sales summary              │
+│     - Payment breakdown          │
+│     - Stock movements            │
+│     - Inventory changes          │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  3. Close Register & Logout      │
+└──────────────────────────────────┘
+```
+
+#### For Restaurant/Cafe Business
+
+```
+PRE-OPENING
+    │
+    ├─ Manager checks reservation list
+    ├─ Inventory stock check
+    ├─ Staff assignments set
+    └─ POS system initialized
+
+SERVICE
+    │
+    ├─ DINE-IN (Table Order)
+    │  ├─ Customer seated
+    │  ├─ Waiter creates order (Table-based)
+    │  ├─ Kitchen receives order
+    │  ├─ Items prepared
+    │  ├─ Waiter serves
+    │  ├─ Customer pays
+    │  └─ Invoice generated
+    │
+    ├─ TAKEAWAY
+    │  ├─ Customer orders
+    │  ├─ Payment collected
+    │  ├─ Order to kitchen
+    │  ├─ Items packed
+    │  └─ Customer takes order
+    │
+    ├─ DELIVERY
+    │  ├─ Customer orders (phone/app/online)
+    │  ├─ Payment collected/verified
+    │  ├─ Delivery details captured
+    │  ├─ Kitchen prepares
+    │  ├─ Driver assigned
+    │  └─ Delivery tracked
+    │
+    └─ INVENTORY MANAGEMENT
+       ├─ Daily ingredient stock check
+       ├─ Stock adjustments for waste/loss
+       ├─ Supplier orders placed
+       └─ Cost tracking
+
+CLOSING
+    │
+    ├─ Process remaining orders
+    ├─ Settle all payments
+    ├─ Generate end-of-day report
+    ├─ Stock count
+    └─ System close
+```
+
+#### For Pharmacy Business
+
+```
+OPERATIONS
+    │
+    ├─ PRESCRIPTION SALES
+    │  ├─ Customer presents prescription
+    │  ├─ Verify prescription validity
+    │  ├─ Check for drug interactions
+    │  ├─ Stock availability check
+    │  ├─ Prepare medicine
+    │  ├─ Provide counseling
+    │  ├─ Process payment
+    │  └─ Generate invoice + receipt
+    │
+    ├─ OVER-THE-COUNTER SALES
+    │  ├─ Customer requests medicine
+    │  ├─ Check stock & expiry
+    │  ├─ Suggest alternatives if needed
+    │  ├─ Create invoice
+    │  ├─ Process payment
+    │  └─ Hand over medicine
+    │
+    ├─ INVENTORY MANAGEMENT
+    │  ├─ Track expiry dates
+    │  ├─ Auto-flag expiring medicines
+    │  ├─ Remove expired items
+    │  ├─ Batch number tracking
+    │  ├─ Stock level monitoring
+    │  └─ Reorder points alert
+    │
+    └─ COMPLIANCE
+       ├─ Maintain audit trail
+       ├─ Prescription records
+       ├─ Tax calculation & reporting
+       └─ Regulatory compliance reports
+```
+
+#### For Clinic Business
+
+```
+OPERATIONS
+    │
+    ├─ PATIENT REGISTRATION
+    │  ├─ New patient intake
+    │  ├─ Medical history capture
+    │  ├─ Contact info storage
+    │  └─ Insurance details (if applicable)
+    │
+    ├─ APPOINTMENT MANAGEMENT
+    │  ├─ Schedule appointments
+    │  ├─ Send reminders
+    │  ├─ Track doctor availability
+    │  └─ Manage cancellations
+    │
+    ├─ CONSULTATION
+    │  ├─ Doctor-patient consultation
+    │  ├─ Medical notes recorded
+    │  ├─ Prescriptions issued
+    │  └─ Follow-up scheduled
+    │
+    ├─ BILLING
+    │  ├─ Consultation charges
+    │  ├─ Medicine/Service charges
+    │  ├─ Insurance claim processing
+    │  └─ Payment collection
+    │
+    └─ PHARMACY INTEGRATION
+       ├─ Prescription linking
+       ├─ Medicine inventory
+       └─ Pharmacy sales tracking
+```
+
+---
+
+## Business Management by Type
+
+### Supported Business Types
+
+#### 1. **Shop** (Retail Store)
+
+**Key Features**:
+
+- SKU/Barcode tracking
+- Multiple payment methods
+- Inventory management
+- Sales analytics
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Daily Sales Summary
+│  ├─ Total Revenue
+│  ├─ Transaction Count
+│  ├─ Top Selling Products
+│  └─ Payment Method Breakdown
+├─ Inventory Management
+│  ├─ Stock Levels
+│  ├─ Low Stock Alerts
+│  ├─ Stock Movements
+│  └─ Reorder Points
+├─ Staff Performance
+│  ├─ Cashier Performance
+│  ├─ Sales by Staff
+│  └─ Transaction Details
+├─ Customer Analytics
+│  ├─ New Customers
+│  ├─ Repeat Customers
+│  ├─ Customer Segmentation
+│  └─ Purchase History
+└─ Reports
+   ├─ Daily Sales Report
+   ├─ Inventory Report
+   ├─ Tax/VAT Report
+   └─ Payment Report
+```
+
+**Critical Workflows**:
+
+```
+Sales → Stock Update → VAT Calculation → Payment Processing → Reporting
+```
+
+---
+
+#### 2. **Restaurant / Cafe**
+
+**Key Features**:
+
+- Table management
+- Order types (Dine-in, Takeaway, Delivery)
+- Kitchen order tracking
+- Menu management
+- Reservation system
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Service Overview
+│  ├─ Active Tables
+│  ├─ Pending Orders
+│  ├─ Average Service Time
+│  └─ Kitchen Status
+├─ Revenue Tracking
+│  ├─ Current Service Total
+│  ├─ Hourly Revenue
+│  ├─ Item-wise Sales
+│  └─ Order Type Breakdown
+├─ Table Management
+│  ├─ Table Status
+│  ├─ Customer Capacity
+│  ├─ Reservation Calendar
+│  └─ Table History
+├─ Menu & Pricing
+│  ├─ Item Availability
+│  ├─ Price Updates
+│  ├─ Special Offers
+│  └─ Item Popularity
+├─ Ingredient Inventory
+│  ├─ Stock Levels
+│  ├─ Usage Tracking
+│  ├─ Supplier Orders
+│  └─ Cost Analysis
+└─ Staff Management
+   ├─ Waiter Performance
+   ├─ Chef Efficiency
+   ├─ Shift Management
+   └─ Tip Tracking
+```
+
+**Critical Workflows**:
+
+```
+Table Reservation → Customer Seated → Order Created → Kitchen → Served → Payment
+   ↓
+   Stock Update → Cost Tracking → VAT Calculation → Revenue Recording
+```
+
+---
+
+#### 3. **Pharmacy**
+
+**Key Features**:
+
+- Prescription management
+- Batch tracking
+- Expiry date management
+- Drug interaction checking
+- Regulatory compliance
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Dispensing Summary
+│  ├─ Prescriptions Filled
+│  ├─ OTC Sales
+│  ├─ Total Revenue
+│  └─ Average Transaction Value
+├─ Inventory Management
+│  ├─ Total Items
+│  ├─ Expiring Soon (30 days)
+│  ├─ Expired Items
+│  ├─ Low Stock Medicines
+│  ├─ Batch Tracking
+│  └─ Supplier Orders
+├─ Prescription Tracking
+│  ├─ Active Prescriptions
+│  ├─ Refill Tracking
+│  ├─ Doctor Integration
+│  └─ Compliance Audit
+├─ Sales Analysis
+│  ├─ Top Medicines
+│  ├─ Sales by Category
+│  ├─ Price vs. Cost Analysis
+│  └─ Margin Analysis
+├─ Regulatory Compliance
+│  ├─ Audit Trails
+│  ├─ Prescription Records
+│  ├─ Tax Reporting
+│  └─ Regulatory Documents
+└─ Stock Management
+   ├─ Stock Adjustments
+   ├─ Wastage Tracking
+   ├─ Expiry Processing
+   └─ Supplier Cost Analysis
+```
+
+**Critical Workflows**:
+
+```
+Prescription → Verify → Check Stock/Interactions → Dispense → Payment
+   ↓
+   Update Batch Tracking → Stock Update → Expiry Alert → Revenue Record
+```
+
+---
+
+#### 4. **Hotel**
+
+**Key Features**:
+
+- Room management
+- Booking system
+- Multiple service billing
+- Guest management
+- Housekeeping tracking
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Occupancy Overview
+│  ├─ Total Rooms
+│  ├─ Occupied Rooms
+│  ├─ Occupancy Rate %
+│  ├─ Vacant Rooms
+│  └─ Maintenance Rooms
+├─ Booking Management
+│  ├─ Current Reservations
+│  ├─ Check-in Today
+│  ├─ Check-out Today
+│  ├─ Extended Stays
+│  └─ Cancellations
+├─ Revenue Tracking
+│  ├─ Room Revenue
+│  ├─ Additional Services Revenue
+│  ├─ Food & Beverage Revenue
+│  ├─ Average Daily Rate (ADR)
+│  └─ Revenue Per Available Room (RevPAR)
+├─ Guest Management
+│  ├─ Active Guests
+│  ├─ Guest Details
+│  ├─ Special Requests
+│  ├─ Guest History
+│  └─ Loyalty Program
+├─ Housekeeping
+│  ├─ Room Status (Clean, Dirty, In-Service)
+│  ├─ Task Assignments
+│  ├─ Task Completion
+│  └─ Maintenance Issues
+├─ Services & Amenities
+│  ├─ Laundry Service
+│  ├─ Room Service Orders
+│  ├─ Facilities Status
+│  └─ Additional Service Charges
+└─ Financial Management
+   ├─ Guest Invoices
+   ├─ Payment Status
+   ├─ Balance Due
+   └─ Billing Report
+```
+
+**Critical Workflows**:
+
+```
+Booking Created → Check-in → Room Assigned → Services Used → Check-out → Invoice → Payment
+   ↓
+   Housekeeping Update → Room Status → Revenue Recording → Tax Calculation
+```
+
+---
+
+#### 5. **Clinic / Medical Center**
+
+**Key Features**:
+
+- Patient management
+- Appointment scheduling
+- Medical records
+- Prescription generation
+- Billing & insurance
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Patient Management
+│  ├─ Active Patients Today
+│  ├─ Appointment Schedule
+│  ├─ Medical History
+│  ├─ Patient Demographics
+│  └─ Patient Contact History
+├─ Doctor Schedule
+│  ├─ Available Doctors
+│  ├─ Doctor Appointments
+│  ├─ Patient Queue
+│  ├─ Consultation Time
+│  └─ Doctor Availability
+├─ Appointments
+│  ├─ Scheduled Appointments
+│  ├─ Check-ins
+│  ├─ No-shows
+│  ├─ Cancellations
+│  └─ Rescheduling
+├─ Consultation Tracking
+│  ├─ Active Consultations
+│  ├─ Medical Notes
+│  ├─ Prescription Generated
+│  ├─ Test Orders
+│  └─ Follow-ups
+├─ Pharmacy Integration
+│  ├─ Prescription Fulfillment
+│  ├─ Medicine Inventory
+│  ├─ Pharmacy Sales
+│  └─ Medicine Cost Analysis
+├─ Financial Management
+│  ├─ Consultation Charges
+│  ├─ Test Charges
+│  ├─ Total Collections
+│  ├─ Payment Status
+│  └─ Insurance Claims
+└─ Reporting
+   ├─ Daily Collection Report
+   ├─ Doctor Performance
+   ├─ Patient Analytics
+   ├─ Test Reports
+   └─ Financial Reports
+```
+
+**Critical Workflows**:
+
+```
+Patient Registration → Appointment → Consultation → Prescription → Billing → Payment
+   ↓
+   Medical Records → Pharmacy Integration → Invoice → Tax Calculation
+```
+
+---
+
+#### 6. **Gym / Fitness Center**
+
+**Key Features**:
+
+- Membership management
+- Class scheduling
+- Attendance tracking
+- Payment plans
+- Trainer assignments
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Membership Overview
+│  ├─ Active Members
+│  ├─ Membership Status
+│  ├─ Expiring Soon
+│  ├─ Renewal Rate
+│  └─ Member Demographics
+├─ Revenue Tracking
+│  ├─ Membership Revenue
+│  ├─ Class Revenue
+│  ├─ Personal Training Revenue
+│  ├─ Membership Renewals
+│  └─ Payment Status
+├─ Class Management
+│  ├─ Class Schedule
+│  ├─ Class Capacity
+│  ├─ Attendance
+│  ├─ Trainer Assignments
+│  └─ Class Popularity
+├─ Attendance Tracking
+│  ├─ Daily Check-ins
+│  ├─ Member Activity
+│  ├─ Equipment Usage
+│  └─ Peak Hours Analysis
+├─ Trainer Management
+│  ├─ Trainer Schedule
+│  ├─ Personal Training Sessions
+│  ├─ Trainer Ratings
+│  └─ Session Revenue
+├─ Equipment Management
+│  ├─ Equipment Status
+│  ├─ Maintenance Schedule
+│  ├─ Usage Tracking
+│  └─ Replacement Planning
+└─ Financial Management
+   ├─ Membership Billing
+   ├─ Payment Collection
+   ├─ Outstanding Dues
+   ├─ Payment Plans
+   └─ Revenue Report
+```
+
+**Critical Workflows**:
+
+```
+Member Registration → Payment Plan → Monthly/Annual Billing → Payment Collection
+   ↓
+   Class Attendance → Usage Tracking → Revenue Recording → Tax Calculation
+```
+
+---
+
+#### 7. **Salon / Spa**
+
+**Key Features**:
+
+- Service catalog
+- Appointment booking
+- Stylist assignments
+- Product inventory
+- Client management
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Service Overview
+│  ├─ Services Offered
+│  ├─ Pricing
+│  ├─ Service Popularity
+│  └─ Average Service Time
+├─ Appointment Management
+│  ├─ Today's Appointments
+│  ├─ Stylist Schedule
+│  ├─ Slot Availability
+│  ├─ No-shows
+│  └─ Cancellations
+├─ Staff Management
+│  ├─ Stylist Availability
+│  ├─ Services by Stylist
+│  ├─ Performance Metrics
+│  ├─ Commission Tracking
+│  └─ Client Ratings
+├─ Revenue Tracking
+│  ├─ Service Revenue
+│  ├─ Product Sales Revenue
+│  ├─ Package Deals
+│  ├─ Membership Revenue
+│  └─ Total Daily Revenue
+├─ Inventory Management
+│  ├─ Product Stock
+│  ├─ Low Stock Alerts
+│  ├─ Supplier Orders
+│  └─ Cost Analysis
+├─ Client Management
+│  ├─ Client Database
+│  ├─ Appointment History
+│  ├─ Preferences & Notes
+│  ├─ Loyalty Program
+│  └─ Client Feedback
+└─ Financial Management
+   ├─ Daily Revenue
+   ├─ Payment Methods
+   ├─ Stylist Commission
+   ├─ Product Margin Analysis
+   └─ Financial Report
+```
+
+**Critical Workflows**:
+
+```
+Appointment Booking → Service Assignment → Stylist Selection → Service Delivery → Payment
+   ↓
+   Product Sales (if any) → Invoice → Tax Calculation → Commission Tracking
+```
+
+---
+
+#### 8. **Warehouse**
+
+**Key Features**:
+
+- Large-scale inventory
+- Zone management
+- Stock allocation
+- Supplier integration
+- Bulk operations
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Inventory Overview
+│  ├─ Total Items in Stock
+│  ├─ Stock by Zone/Section
+│  ├─ Stock Movement (In/Out)
+│  ├─ Inventory Valuation
+│  └─ Turnover Rate
+├─ Warehouse Operations
+│  ├─ Receiving Operations
+│  ├─ Stock Putaway
+│  ├─ Picking Operations
+│  ├─ Packing Operations
+│  └─ Shipping Status
+├─ Stock Management
+│  ├─ Low Stock Items
+│  ├─ Overstock Items
+│  ├─ Stock Balancing
+│  ├─ Reorder Management
+│  └─ Supplier Performance
+├─ Zone Management
+│  ├─ Zone Allocation
+│  ├─ Capacity Usage
+│  ├─ Zone Performance
+│  └─ Reorganization Plans
+├─ Order Fulfillment
+│  ├─ Pending Orders
+│  ├─ Fulfillment Rate
+│  ├─ Order Status Tracking
+│  ├─ Delivery Status
+│  └─ Return Processing
+├─ Staff Management
+│  ├─ Warehouse Staff
+│  ├─ Task Assignments
+│  ├─ Productivity Metrics
+│  ├─ Error Tracking
+│  └─ Performance Reports
+└─ Financial Management
+   ├─ Inventory Cost
+   ├─ Purchase Costs
+   ├─ Storage Costs
+   ├─ Fulfillment Costs
+   └─ Profitability Analysis
+```
+
+**Critical Workflows**:
+
+```
+Purchase Order → Receiving → Quality Check → Putaway → Storage
+   ↓
+   Sales Order → Picking → Packing → Shipping → Delivery → Invoice
+   ↓
+   Stock Update → Cost Tracking → Financial Recording
+```
+
+---
+
+#### 9. **Factory / Manufacturing**
+
+**Key Features**:
+
+- Production planning
+- Raw material management
+- Work-in-progress tracking
+- Quality control
+- Production reporting
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Production Overview
+│  ├─ Daily Production Target
+│  ├─ Production Actual vs Target
+│  ├─ Items Produced
+│  ├─ Items in Progress
+│  └─ Production Efficiency %
+├─ Raw Materials
+│  ├─ Stock Levels
+│  ├─ Material Usage Rate
+│  ├─ Supplier Orders
+│  ├─ Inventory Valuation
+│  └─ Material Costs
+├─ Production Management
+│  ├─ Work Orders
+│  ├─ Production Queue
+│  ├─ Workstation Status
+│  ├─ Production Line Status
+│  └─ Batch Tracking
+├─ Quality Control
+│  ├─ Inspection Results
+│  ├─ Defect Rate
+│  ├─ Quality Issues
+│  ├─ Rejection Count
+│  └─ Rework Items
+├─ Equipment Management
+│  ├─ Machine Status
+│  ├─ Maintenance Schedule
+│  ├─ Downtime Tracking
+│  ├─ Efficiency Metrics
+│  └─ Repair History
+├─ Labor Management
+│  ├─ Labor Hours
+│  ├─ Labor Allocation
+│  ├─ Productivity Per Worker
+│  ├─ Shift Management
+│  └─ Payroll Integration
+└─ Financial Management
+   ├─ Production Cost
+   ├─ Material Cost
+   ├─ Labor Cost
+   ├─ Overhead Cost
+   └─ Unit Cost Analysis
+```
+
+**Critical Workflows**:
+
+```
+Production Plan → Raw Material Allocation → Manufacturing → Quality Check
+   ↓
+   Finished Goods → Sales Orders → Fulfillment → Payment → Revenue Recording
+   ↓
+   Cost Allocation → Profitability Analysis
+```
+
+---
+
+#### 10. **Office / Professional Services**
+
+**Key Features**:
+
+- Project management
+- Service billing
+- Time tracking
+- Document management
+- Client projects
+
+**Manager Controls**:
+
+```
+Dashboard View
+├─ Project Overview
+│  ├─ Active Projects
+│  ├─ Project Status
+│  ├─ Deadline Tracking
+│  ├─ Budget vs Actual
+│  └─ Project Profitability
+├─ Service Billing
+│  ├─ Time Entries
+│  ├─ Billable Hours
+│  ├─ Invoice Generation
+│  ├─ Payment Status
+│  └─ Billing Rate
+├─ Resource Management
+│  ├─ Staff Allocation
+│  ├─ Staff Availability
+│  ├─ Utilization Rate
+│  ├─ Capacity Planning
+│  └─ Skill Matrix
+├─ Client Management
+│  ├─ Active Clients
+│  ├─ Client Projects
+│  ├─ Contract Terms
+│  ├─ Service Levels
+│  └─ Client Feedback
+├─ Financial Management
+│  ├─ Project Revenue
+│  ├─ Project Costs
+│  ├─ Project Margin
+│  ├─ Invoice Status
+│  └─ Collections
+├─ Document Management
+│  ├─ Project Documents
+│  ├─ Contract Files
+│  ├─ Deliverables
+│  ├─ Approval Tracking
+│  └─ Archive
+└─ Reporting
+   ├─ Project Report
+   ├─ Resource Utilization
+   ├─ Financial Report
+   ├─ Time Tracking Report
+   └─ Client Performance Report
+```
+
+**Critical Workflows**:
+
+```
+Project Creation → Resource Allocation → Work Execution → Time Tracking
+   ↓
+   Invoice Generation → Payment Collection → Project Closure → Final Report
+   ↓
+   Cost Analysis → Profitability Review → Resource Feedback
+```
+
+---
+
+## Manager Dashboard & Controls
+
+### Universal Manager Dashboard Components
+
+Every business manager has access to a centralized dashboard with these common features:
+
+#### 1. **Key Performance Indicators (KPIs)**
+
+```
+┌─────────────────────────────────────┐
+│         TODAY'S SUMMARY              │
+├─────────────────────────────────────┤
+│  Total Revenue:        12,450 BDT   │
+│  Total Transactions:   45           │
+│  Average Transaction:  276.67 BDT   │
+│  Pending Payments:     2,100 BDT    │
+│  Stock Movements:      38 items     │
+│  New Customers:        5            │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│         THIS WEEK (CHART)            │
+├─────────────────────────────────────┤
+│  Mon: 10,200                        │
+│  Tue: 11,500                        │
+│  Wed: 9,800                         │
+│  Thu: 12,100                        │
+│  Fri: 14,300                        │
+│  Sat: 16,200                        │
+│  Sun: [Today]                       │
+└─────────────────────────────────────┘
+```
+
+#### 2. **Real-Time Alerts & Notifications**
+
+```
+┌─────────────────────────────────────┐
+│         ACTIVE ALERTS                │
+├─────────────────────────────────────┤
+│  ⚠️  Low Stock: Item #234           │
+│  ⚠️  Expiring Soon: Medicine #567   │
+│  ℹ️  Payment Pending: Invoice #789   │
+│  ✅ Sales Target: 85% achieved      │
+│  ❌ System Error: API slow (5s)      │
+└─────────────────────────────────────┘
+```
+
+#### 3. **Quick Actions Menu**
+
+```
+┌────────────────────────────────────────┐
+│       QUICK ACTIONS                    │
+├────────────────────────────────────────┤
+│  [+ New Sale]     [+ New Purchase]    │
+│  [+ New Customer] [+ New Supplier]    │
+│  [Stock Check]    [Reconcile]         │
+│  [Print Report]   [Export Data]       │
+│  [Notifications]  [Messages]          │
+└────────────────────────────────────────┘
+```
+
+#### 4. **Branch Selector & Switch**
+
+```
+Current Branch: Main Store (Downtown)
+
+┌─────────────────────────────────────┐
+│  Switch Branch:                     │
+│  ├─ Main Store (Downtown)     [✓]   │
+│  ├─ Branch 2 (Suburbs)        [ ]   │
+│  ├─ Branch 3 (Airport)        [ ]   │
+│  └─ All Branches              [ ]   │
+└─────────────────────────────────────┘
+```
+
+#### 5. **User Profile & Settings**
+
+```
+┌─────────────────────────────────────┐
+│  User: Sarah (Manager)              │
+│  Branch: Main Store                 │
+│  Role: Branch Manager               │
+│  Permissions: [Read] [Write] [...]  │
+│                                     │
+│  [Edit Profile]                    │
+│  [Change Password]                 │
+│  [Notification Settings]           │
+│  [Theme Settings]                  │
+│  [Logout]                          │
+└─────────────────────────────────────┘
+```
+
+#### 6. **Advanced Filtering & Reports**
+
+```
+Report Generation:
+┌─────────────────────────────────────┐
+│  Select Report Type:                │
+│  ├─ Sales Report                    │
+│  ├─ Inventory Report                │
+│  ├─ Payment Report                  │
+│  ├─ Tax Report                      │
+│  ├─ Customer Report                 │
+│  └─ Custom Report                   │
+│                                     │
+│  Date Range: [From] [To]           │
+│  Filter: [Branch] [Category] [...]  │
+│  Format: [PDF] [Excel] [CSV]       │
+│                                     │
+│  [Generate] [Schedule] [Email]     │
+└─────────────────────────────────────┘
+```
+
+### Manager Actions by Authority Level
+
+#### Admin Level
+
+```
+Full System Control
+├─ Manage Companies
+├─ Manage All Branches
+├─ Manage Users & Roles
+├─ Configure Permissions
+├─ View All Reports
+├─ System Settings
+└─ Audit Logs
+```
+
+#### Branch Manager Level
+
+```
+Branch-Level Control
+├─ View Branch Dashboard
+├─ Manage Branch Operations
+├─ Create Sales/Purchase Orders
+├─ Manage Staff (Branch)
+├─ View Branch Reports
+├─ Inventory Management (Branch)
+└─ Daily Reconciliation
+```
+
+#### Supervisor Level
+
+```
+Operational Control
+├─ View Dashboard
+├─ Process Sales
+├─ Stock Management
+├─ Manage Staff (Team)
+├─ View Team Reports
+└─ Escalate Issues
+```
+
+#### Staff Level
+
+```
+Limited Operations
+├─ View Assigned Tasks
+├─ Create Sales
+├─ Scan/Process Items
+└─ Request Assistance
+```
+
+#### Viewer Level
+
+```
+Read-Only Access
+├─ View Reports
+├─ View Dashboard
+├─ View Transactions
+└─ Export Data
 ```
 
 ---
