@@ -16,11 +16,14 @@ model User {
   password       String          @db.VarChar(255)
   is_Active      Boolean         @default(true)
   avatar         String?         @db.Text
+  companyId      String          @db.Uuid
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @db.Timestamptz(6)
   userRoles      UserRole[]
   userBranches   UserBranch[]
   stockMovements StockMovement[]
+  subscriptions  Subscription[]
 
   @@map("users")
 }
@@ -28,6 +31,8 @@ model User {
 model Role {
   id              String           @id @default(uuid()) @db.Uuid
   role_name       String           @unique @db.VarChar(100)
+  companyId       String           @db.Uuid
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt       DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
   userRoles       UserRole[]
@@ -72,6 +77,36 @@ model RolePermission {
   @@map("role_permissions")
 }
 
+// Payment & Subscription Management
+enum PlanType {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  EXPIRED
+  CANCELLED
+}
+
+model Subscription {
+  id                       String             @id @default(uuid()) @db.Uuid
+  userId                   String             @unique @db.Uuid
+  user                     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId                String?            @unique @db.Uuid
+  company                  Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan                     PlanType
+  status                   SubscriptionStatus @default(PENDING)
+  stripe_customer_id       String?            @db.VarChar(255)
+  stripe_subscription_id   String?            @db.VarChar(255)
+  stripe_payment_intent_id String?            @db.VarChar(255)
+  paid_at                  DateTime?
+  expires_at               DateTime?
+  createdAt                DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt                DateTime           @updatedAt @db.Timestamptz(6)
+}
+
 // Company & Branch Management
 
 enum BusinessType {
@@ -95,21 +130,25 @@ enum Currency {
 }
 
 model Company {
-  id                      String       @id @default(uuid()) @db.Uuid
-  name                    String       @db.VarChar(255)
+  id                      String        @id @default(uuid()) @db.Uuid
+  name                    String        @db.VarChar(255)
   business_type           BusinessType
-  trade_license_number    String?      @db.VarChar(100)
-  vat_registration_number String?      @db.VarChar(100)
-  address                 String?      @db.Text
-  phone                   String?      @db.VarChar(20)
-  email                   String?      @db.VarChar(255)
-  currency_default        Currency     @default(BDT)
-  createdAt               DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt               DateTime     @updatedAt @db.Timestamptz(6)
+  trade_license_number    String?       @db.VarChar(100)
+  vat_registration_number String?       @db.VarChar(100)
+  address                 String?       @db.Text
+  phone                   String?       @db.VarChar(20)
+  email                   String?       @db.VarChar(255)
+  currency_default        Currency      @default(BDT)
+  is_setup_complete       Boolean       @default(false)
+  createdAt               DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime      @updatedAt @db.Timestamptz(6)
   branches                Branch[]
   categories              Category[]
   products                Product[]
   customers               Customer[]
+  users                   User[]
+  roles                   Role[]
+  subscription            Subscription?
 
   @@unique([phone, email, trade_license_number, vat_registration_number])
   @@map("companies")
@@ -585,4 +624,3 @@ model VatTransaction {
 
   @@map("vat_transactions")
 }
-
