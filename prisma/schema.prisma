@@ -140,6 +140,7 @@ model Company {
   email                   String?       @db.VarChar(255)
   currency_default        Currency      @default(BDT)
   is_setup_complete       Boolean       @default(false)
+  user_limit              Int           @default(10)
   createdAt               DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime      @updatedAt @db.Timestamptz(6)
   branches                Branch[]

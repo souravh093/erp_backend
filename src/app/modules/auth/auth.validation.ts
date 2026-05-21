@@ -1,5 +1,18 @@
 import z from 'zod';
 
+const businessTypes = z.enum([
+  'SHOP',
+  'RESTAURANT',
+  'PHARMACY',
+  'HOTEL',
+  'CLINIC',
+  'GYM',
+  'SALON',
+  'WAREHOUSE',
+  'FACTORY',
+  'OFFICE',
+]);
+
 const registerValidation = z.object({
   body: z.object({
     name: z
@@ -23,9 +36,30 @@ const registerValidation = z.object({
       .url('Avatar must be a valid URL')
       .max(255, 'Avatar URL must be less than 255 characters')
       .optional(),
+    companyId: z.string().uuid('Invalid company id').optional(),
+    companyName: z
+      .string()
+      .min(1, 'Company name is required')
+      .max(255, 'Company name must be less than 255 characters')
+      .optional(),
+    businessType: businessTypes.optional(),
+  }),
+});
+
+const loginValidation = z.object({
+  body: z.object({
+    email: z
+      .string()
+      .email('Invalid email address')
+      .max(255, 'Email must be less than 255 characters'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(255, 'Password must be less than 255 characters'),
   }),
 });
 
 export const authValidation = {
   register: registerValidation,
+  login: loginValidation,
 };

@@ -15,6 +15,12 @@ const __dirname = path.dirname(__filename);
 
 const app: Application = express();
 
+// Stripe webhook must receive the raw body for signature verification
+app.use(
+  '/api/v1/subscription/webhook',
+  express.raw({ type: 'application/json' }),
+);
+
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(cors());

@@ -22,4 +22,11 @@ export default {
   emailHost: process.env.EMAIL_HOST,
   emailPort: process.env.EMAIL_PORT,
   emailSecure: process.env.EMAIL_SECURE === 'true',
+
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  stripeMonthlyPriceId: process.env.STRIPE_MONTHLY_PRICE_ID,
+  stripeYearlyPriceId: process.env.STRIPE_YEARLY_PRICE_ID,
+  stripeSuccessUrl: process.env.STRIPE_SUCCESS_URL,
+  stripeCancelUrl: process.env.STRIPE_CANCEL_URL,
 };
