@@ -40,9 +40,8 @@ const registerValidation = z.object({
     companyName: z
       .string()
       .min(1, 'Company name is required')
-      .max(255, 'Company name must be less than 255 characters')
-      .optional(),
-    businessType: businessTypes.optional(),
+      .max(255, 'Company name must be less than 255 characters'),
+    businessType: businessTypes,
   }),
 });
 

@@ -13,15 +13,10 @@ const setupCompany = async (payload: TCompanySetupPayload) => {
     throw new AppError(404, 'User not found');
   }
 
-  const company = await prisma.company.upsert({
+  const company = await prisma.company.update({
     where: { id: user.companyId },
-    update: {
+    data: {
       ...companyData,
-      is_setup_complete: true,
-    },
-    create: {
-      ...companyData,
-      id: user.companyId,
       is_setup_complete: true,
     },
   });
