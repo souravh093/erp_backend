@@ -1,3 +1,5 @@
+// Commented out since Student model does not exist in the current prisma schema.
+/*
 import {
   Student,
   StudentAddress,
@@ -19,3 +21,4 @@ export type MargeStudent = Student & {
   studentEducations: StudentEducation[] | null;
   studentGuardian: StudentGuardian | null;
 };
+*/

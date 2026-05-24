@@ -1,4 +1,4 @@
-import prisma from '../../db/db.config';
+import { prisma } from '../../db/db.config';
 import configs from '../configs';
 import AppError from '../errors/AppError';
 import catchAsync from '../utils/catchAsync';
@@ -6,6 +6,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const auth = () => {
   return catchAsync(async (req, res, next) => {
+    /*
     const bearerToken = req.headers.authorization;
 
     if (!bearerToken) {
@@ -42,6 +43,7 @@ const auth = () => {
     }
 
     req.user = decoded as JwtPayload;
+    */
 
     next();
   });

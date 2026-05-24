@@ -12,7 +12,7 @@ const parseFormData = (fields: string[]) => {
         if (req.body[field] && typeof req.body[field] === 'string') {
           try {
             req.body[field] = JSON.parse(req.body[field]);
-          } catch (error:any) {
+          } catch (error: any) {
             console.log(error);
             // If parsing fails, keep the original value
             console.log(`Failed to parse field: ${field}`);

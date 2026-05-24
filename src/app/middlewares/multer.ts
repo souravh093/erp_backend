@@ -33,7 +33,7 @@ const fileFilter = function (req: any, file: any, cb: any) {
 
 const imageFilter = function (req: any, file: any, cb: any) {
   if (ACCEPTED_IMAGE_TYPES.includes(file.mimetype)) {
-    cb(null, true); 
+    cb(null, true);
   } else {
     cb(new Error('Unsupported image type'), false);
   }
@@ -60,9 +60,7 @@ export const uploadImages = async (req: any, res: any, next: NextFunction) => {
       const filename = `${file.fieldname}-${timestamp}-${Math.round(Math.random() * 1e9)}.webp`;
       const outputPath = path.join(process.cwd(), 'public', 'images', filename);
 
-      await sharp(file.buffer)
-        .webp({ quality: 80 })
-        .toFile(outputPath);
+      await sharp(file.buffer).webp({ quality: 80 }).toFile(outputPath);
 
       return filename;
     };

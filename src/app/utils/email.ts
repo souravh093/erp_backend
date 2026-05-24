@@ -80,3 +80,74 @@ export const sendOTPEmail = async (to: string, otp: string): Promise<void> => {
     html: emailContent,
   });
 };
+
+export const sendResetPasswordEmail = async (
+  to: string,
+  resetLink: string,
+): Promise<void> => {
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password</title>
+  </head>
+  <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+          <tr>
+              <td align="center" style="padding: 40px 0;">
+                  <table role="presentation" style="width: 600px; max-width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                      <!-- Header -->
+                      <tr>
+                          <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+                              <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #111827;">Reset Your Password</h1>
+                          </td>
+                      </tr>
+                      <!-- Content -->
+                      <tr>
+                          <td style="padding: 40px;">
+                              <p style="margin: 0 0 20px; font-size: 16px; line-height: 24px; color: #374151;">
+                                  We received a request to reset your password. Click the button below to choose a new password:
+                              </p>
+                              <!-- Reset Button -->
+                              <table role="presentation" style="width: 100%; margin: 30px 0;">
+                                  <tr>
+                                      <td align="center">
+                                          <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;">
+                                              Reset Password
+                                          </a>
+                                      </td>
+                                  </tr>
+                              </table>
+                              <p style="margin: 20px 0 0; font-size: 14px; line-height: 20px; color: #6b7280; text-align: center;">
+                                  This link will expire in <strong>15 minutes</strong>. If you did not request this, you can ignore this email.
+                              </p>
+                          </td>
+                      </tr>
+                      <!-- Footer -->
+                      <tr>
+                          <td style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+                              <p style="margin: 0 0 10px; font-size: 12px; line-height: 18px; color: #6b7280;">
+                                  If you didn't request this email, you can safely ignore it.
+                              </p>
+                              <p style="margin: 0; font-size: 12px; line-height: 18px; color: #9ca3af;">
+                                  © 2025 Part Timer. All rights reserved.
+                              </p>
+                          </td>
+                      </tr>
+                  </table>
+              </td>
+          </tr>
+      </table>
+  </body>
+  </html>
+  `;
+
+  await transporter.sendMail({
+    from: `"Part Timer" <${configs.adminEmail}>`,
+    to,
+    subject: 'Reset Your Password',
+    html: htmlContent,
+  });
+};

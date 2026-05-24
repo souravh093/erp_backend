@@ -8,7 +8,7 @@ const router = Router();
 
 const moduleRoutes: TModuleRoute[] = [
   {
-    path: "/auth",
+    path: '/auth',
     route: authRoutes,
   },
   {
@@ -18,7 +18,7 @@ const moduleRoutes: TModuleRoute[] = [
   {
     path: '/company',
     route: companyRoutes,
-  }
+  },
 ];
 
 moduleRoutes.forEach((route) => {

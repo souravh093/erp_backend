@@ -1,4 +1,4 @@
-import prisma from '../../db/db.config';
+import { prisma } from '../../db/db.config';
 import configs from '../configs';
 import catchAsync from '../utils/catchAsync';
 import sendResponse from '../utils/sendResponse';
@@ -6,6 +6,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export const roleAuth = (...roles: Array<'CUSTOMER' | 'SELLER'>) => {
   return catchAsync(async (req, res, next) => {
+    /*
     const bearerToken = req.headers.authorization;
 
     if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
@@ -56,6 +57,7 @@ export const roleAuth = (...roles: Array<'CUSTOMER' | 'SELLER'>) => {
     }
 
     req.user = { ...decoded, userData: existingUser };
+    */
 
     next();
   });

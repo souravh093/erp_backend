@@ -58,7 +58,68 @@ const loginValidation = z.object({
   }),
 });
 
+const forgotPasswordValidation = z.object({
+  body: z.object({
+    email: z
+      .string()
+      .email('Invalid email address')
+      .max(255, 'Email must be less than 255 characters'),
+  }),
+});
+
+const resetPasswordValidation = z.object({
+  body: z
+    .object({
+      token: z.string().min(1, 'Token is required'),
+      email: z
+        .string()
+        .email('Invalid email address')
+        .max(255, 'Email must be less than 255 characters'),
+      newPassword: z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(255, 'Password must be less than 255 characters')
+        .optional(),
+      password: z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(255, 'Password must be less than 255 characters')
+        .optional(),
+    })
+    .refine((data) => data.newPassword || data.password, {
+      message: 'Either newPassword or password is required',
+      path: ['newPassword'],
+    }),
+});
+
+const changePasswordValidation = z.object({
+  body: z
+    .object({
+      oldPassword: z
+        .string()
+        .min(8, 'Old password must be at least 8 characters')
+        .max(255, 'Old password must be less than 255 characters'),
+      newPassword: z
+        .string()
+        .min(8, 'New password must be at least 8 characters')
+        .max(255, 'New password must be less than 255 characters')
+        .optional(),
+      password: z
+        .string()
+        .min(8, 'New password must be at least 8 characters')
+        .max(255, 'New password must be less than 255 characters')
+        .optional(),
+    })
+    .refine((data) => data.newPassword || data.password, {
+      message: 'Either newPassword or password is required',
+      path: ['newPassword'],
+    }),
+});
+
 export const authValidation = {
   register: registerValidation,
   login: loginValidation,
+  forgotPassword: forgotPasswordValidation,
+  resetPassword: resetPasswordValidation,
+  changePassword: changePasswordValidation,
 };
