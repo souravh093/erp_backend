@@ -18,6 +18,8 @@ router.post(
   authController.loginUser,
 );
 
+router.get('/me', auth(), authController.loggedInUser);
+
 router.post(
   '/forgot-password',
   validation(authValidation.forgotPassword),

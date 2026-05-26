@@ -12,6 +12,7 @@ High-level system design and architectural decisions
 - [Technology Stack](./architecture/technology-stack.md)
 - [Data Flow](./architecture/data-flow.md)
 - [Security Architecture](./architecture/security-architecture.md)
+- [Role & Permission Setup](./role_permission_setup.md)
 
 ### 🗄️ [Database](./database/)
 

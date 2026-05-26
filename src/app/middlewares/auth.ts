@@ -5,7 +5,7 @@ import AppError from '../errors/AppError';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const auth = () => {
-  return catchAsync(async (req, res, next) => {
+  return catchAsync(async (req, _res, next) => {
     const bearerToken = req.headers.authorization;
 
     if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
@@ -21,10 +21,11 @@ const auth = () => {
         configs.jwtAccessSecret as string,
       ) as JwtPayload;
     } catch (error) {
+      console.log(error);
       throw new AppError(401, 'Invalid or expired token');
     }
 
-    const { id, email } = decoded;
+    const { id } = decoded;
 
     const user = await prisma.user.findUnique({
       where: {

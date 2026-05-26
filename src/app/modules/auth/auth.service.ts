@@ -158,6 +158,24 @@ const loginUserFromDB = async (payload: TAuthLoginPayload) => {
   };
 };
 
+const loggedInUserFromDB = async (userId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new AppError(404, 'User not found');
+  }
+
+  return {
+    id: existingUser.id,
+    name: existingUser.name,
+    email: existingUser.email,
+    phone: existingUser.phone,
+    companyId: existingUser.companyId,
+  };
+};
+
 const forgotPassword = async (payload: TForgotPasswordPayload) => {
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
@@ -262,4 +280,5 @@ export const authServices = {
   forgotPassword,
   resetPassword,
   changePassword,
+  loggedInUserFromDB,
 };

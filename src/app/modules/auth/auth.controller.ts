@@ -34,6 +34,17 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
+const loggedInUser = catchAsync(async (req, res) => {
+  const response = await authServices.loggedInUserFromDB(req.user.id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User fetched successfully',
+    data: response,
+  });
+});
+
 const forgotPassword = catchAsync(async (req, res) => {
   const response = await authServices.forgotPassword(req.body);
 
@@ -71,6 +82,7 @@ const changePassword = catchAsync(async (req, res) => {
 export const authController = {
   createUser,
   loginUser,
+  loggedInUser,
   forgotPassword,
   resetPassword,
   changePassword,
