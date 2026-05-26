@@ -8,6 +8,8 @@
     "build": "tsc",
     "start:prod": "node ./dist/app.js",
     "start:dev": "tsx watch ./src/app.ts",
+    "db:seed": "tsx ./src/app/utils/seedPermission.ts",
+    "seed:permissions": "tsx ./src/app/utils/seedPermission.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
