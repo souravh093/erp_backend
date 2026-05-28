@@ -166,6 +166,11 @@ const syncSubscriptionFromStripe = async (
 };
 
 const createCheckoutSession = async (payload: TSubscriptionCheckoutPayload) => {
+  const company = await prisma.company.findFirst({
+    where: {
+      users: { some: { id: payload.userId } },
+    },
+  });
   const stripe = getStripeClient();
 
   const priceId = resolvePriceId(payload.plan);
@@ -214,7 +219,9 @@ const createCheckoutSession = async (payload: TSubscriptionCheckoutPayload) => {
         quantity: 1,
       },
     ],
-    success_url: configs.stripeSuccessUrl,
+    success_url: company?.is_setup_complete
+      ? configs.stripeSuccessUrl
+      : configs.companySetupUrl,
     cancel_url: configs.stripeCancelUrl,
     metadata: {
       userId: user.id,

@@ -29,4 +29,5 @@ export default {
   stripeYearlyPriceId: process.env.STRIPE_YEARLY_PRICE_ID,
   stripeSuccessUrl: process.env.STRIPE_SUCCESS_URL,
   stripeCancelUrl: process.env.STRIPE_CANCEL_URL,
+  companySetupUrl: process.env.COMPANY_SETUP_URL,
 };

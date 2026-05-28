@@ -119,6 +119,9 @@ const loginUserFromDB = async (payload: TAuthLoginPayload) => {
   } else if (!isSetupComplete) {
     onboardingStep = 'COMPANY_SETUP';
     redirect = '/company-setup';
+  } else {
+    onboardingStep = 'DONE';
+    redirect = '/dashboard';
   }
 
   const accessToken = generateToken(

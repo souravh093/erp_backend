@@ -24,7 +24,7 @@ const setupCompany = async (payload: TCompanySetupPayload) => {
 
     const defaultBranch = await tx.branch.create({
       data: {
-        name: `${company.name} HQ`,
+        name: 'HQ',
         address: companyData.address || company.address || null,
         phone: companyData.phone || company.phone || null,
         email: companyData.email || company.email || null,
