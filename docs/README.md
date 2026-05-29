@@ -53,6 +53,12 @@ Visual representations of system architecture and workflows
 - Sequence Diagrams
 - Data Flow Diagrams
 
+### 🎨 [Frontend & Design](./dashboard_design_prompts.md)
+
+Frontend implementation guides and AI code generation prompts
+
+- [Dashboard Design Prompts](./dashboard_design_prompts.md)
+
 ### 🚀 [Deployment](./deployment/)
 
 Environment setup and deployment guides

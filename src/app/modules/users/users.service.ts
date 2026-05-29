@@ -2,7 +2,6 @@ import { prisma } from '../../../db/db.config';
 import AppError from '../../errors/AppError';
 
 const getMyPermissionsFromDB = async (userId: string) => {
-    console.log(userId);
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, is_Active: true },
@@ -32,7 +31,6 @@ const getMyPermissionsFromDB = async (userId: string) => {
     orderBy: { permission: 'asc' },
   });
 
-  console.log(permissions);
 
   return permissions.map((item) => item.permission);
 };
