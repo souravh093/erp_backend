@@ -4,6 +4,8 @@ import { authRoutes } from '../modules/auth/auth.routes';
 import { companyRoutes } from '../modules/company/company.routes';
 import { subscriptionRoutes } from '../modules/subscription/subscription.routes';
 import { usersRoutes } from '../modules/users/users.routes';
+import { roleRoutes } from '../modules/role/role.routes';
+import { branchRoutes } from '../modules/branch/branch.routes';
 
 const router = Router();
 
@@ -11,6 +13,14 @@ const moduleRoutes: TModuleRoute[] = [
   {
     path: '/auth',
     route: authRoutes,
+  },
+  {
+    path: '/users',
+    route: usersRoutes,
+  },
+  {
+    path: '/role',
+    route: roleRoutes,
   },
   {
     path: '/subscription',
@@ -21,8 +31,8 @@ const moduleRoutes: TModuleRoute[] = [
     route: companyRoutes,
   },
   {
-    path: '/users',
-    route: usersRoutes,
+    path: '/branch',
+    route: branchRoutes,
   },
 ];
 

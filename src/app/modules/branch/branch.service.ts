@@ -97,6 +97,8 @@ const assignUserToBranchInDB = async (branchId: string, userId: string) => {
   return response;
 };
 
+
+
 export const branchService = {
   createBranchIntoDB,
   getBranchesFromDB,

@@ -16,7 +16,7 @@ model User {
   password       String          @db.VarChar(255)
   is_Active      Boolean         @default(true)
   avatar         String?         @db.Text
-  isRoot         Boolean         @default(false) 
+  isRoot         Boolean         @default(false)
   companyId      String          @db.Uuid
   company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)
@@ -150,6 +150,7 @@ model Company {
   users                   User[]
   roles                   Role[]
   subscription            Subscription?
+  units                   Unit[]
 
   @@unique([phone, email, trade_license_number, vat_registration_number])
   @@map("companies")
@@ -220,8 +221,10 @@ model SubCategory {
 
 model Unit {
   id                   String    @id @default(uuid()) @db.Uuid
-  name                 String    @db.VarChar(50)
+  name                 String    @db.VarChar(50) // 
   conversion_base_unit String?   @db.VarChar(50)
+  companyId            String    @db.Uuid
+  company              Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt            DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime  @updatedAt @db.Timestamptz(6)
   products             Product[]
@@ -278,7 +281,7 @@ model ProductPricing {
   @@map("product_pricing")
 }
 
-model Stock {
+model Stock { 
   id               String   @id @default(uuid()) @db.Uuid
   current_quantity Int      @default(0)
   reorder_level    Int      @default(0)
