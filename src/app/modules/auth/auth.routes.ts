@@ -13,6 +13,13 @@ router.post(
 );
 
 router.post(
+  '/register/root/:rootUserId',
+  auth(),
+  validation(authValidation.registerByRootUser),
+  authController.createUserByRootUser,
+);
+
+router.post(
   '/login',
   validation(authValidation.login),
   authController.loginUser,

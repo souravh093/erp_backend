@@ -13,6 +13,20 @@ const createUser = catchAsync(async (req, res) => {
   });
 });
 
+const createUserByRootUser = catchAsync(async (req, res) => {
+  const response = await authServices.createUserByRootUserIntoDB(
+    req.body,
+    req.params.rootUserId,
+  );
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: 'User created successfully',
+    data: response,
+  });
+});
+
 const loginUser = catchAsync(async (req, res) => {
   const response = await authServices.loginUserFromDB(req.body);
 
@@ -86,4 +100,5 @@ export const authController = {
   forgotPassword,
   resetPassword,
   changePassword,
+  createUserByRootUser,
 };

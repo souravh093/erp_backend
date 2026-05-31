@@ -16,6 +16,15 @@ export type TAuthRegisterPayload = {
   businessType?: BusinessType;
 };
 
+export type TAuthRegisterByRootPayload = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  avatar?: string;
+  companyId?: string;
+};
+
 export type TForgotPasswordPayload = {
   email: string;
 };

@@ -16,6 +16,7 @@ model User {
   password       String          @db.VarChar(255)
   is_Active      Boolean         @default(true)
   avatar         String?         @db.Text
+  isRoot         Boolean         @default(false) 
   companyId      String          @db.Uuid
   company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)

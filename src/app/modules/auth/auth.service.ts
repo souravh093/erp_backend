@@ -9,6 +9,7 @@ import AppError from '../../errors/AppError';
 import { generateToken } from '../../utils/generateToken';
 import {
   TAuthLoginPayload,
+  TAuthRegisterByRootPayload,
   TAuthRegisterPayload,
   TChangePasswordPayload,
   TForgotPasswordPayload,
@@ -62,6 +63,7 @@ const createUserIntoDB = async (payload: TAuthRegisterPayload) => {
         name: payload.name,
         email: payload.email,
         phone: payload.phone,
+        isRoot: true,
         avatar: payload.avatar,
         password: hashedPassword,
         companyId: resolvedCompanyId,
@@ -69,6 +71,41 @@ const createUserIntoDB = async (payload: TAuthRegisterPayload) => {
     });
 
     return createdUser;
+  });
+
+  return response;
+};
+
+const createUserByRootUserIntoDB = async (
+  payload: TAuthRegisterByRootPayload,
+  rootUserId: string,
+) => {
+  const rootUser = await prisma.user.findUnique({
+    where: { id: rootUserId, isRoot: true },
+  });
+
+  if (!rootUser) {
+    throw new AppError(403, 'Only root users can create new users');
+  }
+
+  const isExistingUser = await prisma.user.findUnique({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (isExistingUser) {
+    throw new AppError(400, 'User with this email already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
+
+  const response = await prisma.user.create({
+    data: {
+      ...payload,
+      password: hashedPassword,
+      companyId: rootUser.companyId,
+    },
   });
 
   return response;
@@ -113,9 +150,11 @@ const loginUserFromDB = async (payload: TAuthLoginPayload) => {
   let onboardingStep: TOnboardingStep = 'DONE';
   let redirect: string | null = null;
 
-  if (!isSubscriptionValid) {
-    onboardingStep = 'SUBSCRIBE';
-    redirect = '/subscribe';
+  if (existingUser.isRoot) {
+    if (!isSubscriptionValid) {
+      onboardingStep = 'SUBSCRIBE';
+      redirect = '/subscribe';
+    }
   } else if (!isSetupComplete) {
     onboardingStep = 'COMPANY_SETUP';
     redirect = '/company-setup';
@@ -279,6 +318,7 @@ const changePassword = async (
 
 export const authServices = {
   createUserIntoDB,
+  createUserByRootUserIntoDB,
   loginUserFromDB,
   forgotPassword,
   resetPassword,
