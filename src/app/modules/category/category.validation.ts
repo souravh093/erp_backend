@@ -7,7 +7,7 @@ const createCategoryValidation = z.object({
       .string()
       .max(100, 'Description must be at most 100 characters')
       .optional(),
-    companyId: z.string().min(1, 'Company ID is required'),
+    companyId: z.string().uuid('Invalid company ID').min(1, 'Company ID is required'),
   }),
 });
 

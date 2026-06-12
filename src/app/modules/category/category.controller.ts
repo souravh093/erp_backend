@@ -1,4 +1,5 @@
 import catchAsync from '../../utils/catchAsync';
+import AppError from '../../errors/AppError';
 import sendResponse from '../../utils/sendResponse';
 import { categoryService } from './category.service';
 
@@ -14,8 +15,10 @@ const createCategory = catchAsync(async (req, res) => {
 });
 
 const getCategories = catchAsync(async (req, res) => {
+  const { companyId } = req.user as { companyId: string };
+
   const response = await categoryService.getCategoriesFromDB(
-    req.params.companyId,
+    companyId,
   );
 
   sendResponse(res, {
@@ -28,6 +31,10 @@ const getCategories = catchAsync(async (req, res) => {
 
 const getCategoryById = catchAsync(async (req, res) => {
   const response = await categoryService.getCategoryByIdFromDB(req.params.id);
+
+  if (!response) {
+    throw new AppError(404, 'Category not found');
+  }
 
   sendResponse(res, {
     statusCode: 200,

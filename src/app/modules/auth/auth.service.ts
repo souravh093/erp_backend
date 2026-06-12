@@ -178,6 +178,8 @@ const loginUserFromDB = async (payload: TAuthLoginPayload) => {
     {
       id: existingUser.id,
       email: existingUser.email,
+      companyId: existingUser.companyId,
+      onboardingStep,
     },
     configs.jwtRefreshSecret as string,
     configs.refreshTokenExpiration as string,
