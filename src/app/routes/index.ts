@@ -7,6 +7,7 @@ import { usersRoutes } from '../modules/users/users.routes';
 import { roleRoutes } from '../modules/role/role.routes';
 import { branchRoutes } from '../modules/branch/branch.routes';
 import { categoryRoutes } from '../modules/category/category.routes';
+import { subCategoryRoutes } from '../modules/subCategory/subCategory.routes';
 
 const router = Router();
 
@@ -38,6 +39,10 @@ const moduleRoutes: TModuleRoute[] = [
   {
     path: '/category',
     route: categoryRoutes,
+  },
+  {
+    path: '/sub-category',
+    route: subCategoryRoutes,
   },
 ];
 
