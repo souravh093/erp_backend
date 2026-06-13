@@ -159,7 +159,8 @@ Suggested REST endpoints for the module:
 
 ## 📚 Related Documentation
 
-- [Product & Inventory Management](./inventory.md)
+- [Product Management Module](./product.md)
+- [Inventory Management Module](./inventory.md)
 - [Database Schema](../database/schema-overview.md)
 - [Products API](../api/products-api.md)
 

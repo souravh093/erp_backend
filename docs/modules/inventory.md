@@ -1,23 +1,20 @@
-# Product & Inventory Management Module
+# Inventory Management Module
 
 ## 📋 Overview
 
-The Inventory Management module handles product catalog, stock tracking, inventory movements, and reorder management across multiple branches.
+The Inventory Management module handles stock tracking, inventory movements, reorder management, and inventory reporting across multiple branches.
 
 ---
 
 ## 🎯 Key Features
 
-- Product catalog management with categories and subcategories
 - Multi-branch stock tracking
 - Real-time inventory updates
 - Stock movement history and auditing
 - Reorder level alerts
-- Product pricing with VAT and discounts
 - Batch and expiry tracking
 - Stock transfer between branches
-- SKU and barcode management
-- Unit of measurement support
+- Product-aware stock tracking
 
 ---
 
@@ -25,85 +22,8 @@ The Inventory Management module handles product catalog, stock tracking, invento
 
 ### Core Tables
 
-- `products` - Product master data
-- `product_pricing` - Pricing information
-- `categories` - Product categories
-- `sub_categories` - Product subcategories
-- `units` - Units of measurement
 - `stocks` - Stock levels per branch
 - `stock_movements` - Inventory movement history
-
----
-
-## 📦 Product Management
-
-### Product Entity Structure
-
-```prisma
-model Product {
-  id                String           @id @default(uuid())
-  name              String           @db.VarChar(255)
-  description       String?
-  sku               String?          @unique
-  barcode           String?          @unique
-  unitId            String
-  productType       ProductType      // GOODS or SERVICE
-  is_active         Boolean          @default(true)
-  companyId         String
-  categoryId        String
-  subCategoryId     String?
-  productPricing    ProductPricing?
-  stocks            Stock[]
-}
-```
-
-### Product Types
-
-- **GOODS**: Physical products with inventory tracking
-- **SERVICE**: Non-physical items without inventory
-
-### Product Hierarchy
-
-```
-Company
-  └── Category (e.g., "Electronics")
-       └── SubCategory (e.g., "Laptops")
-            └── Product (e.g., "Dell XPS 15")
-```
-
----
-
-## 💰 Product Pricing
-
-### Pricing Entity
-
-```prisma
-model ProductPricing {
-  id                    String   @id @default(uuid())
-  purchase_price        Float
-  selling_price         Float
-  vat_rate_percent      Int
-  discount_rate_percent Int      @default(0)
-  allow_discount        Boolean  @default(false)
-  effective_from        DateTime
-  productId             String   @unique
-}
-```
-
-### Pricing Calculations
-
-```typescript
-// Line total without discount
-lineTotal = quantity × selling_price
-
-// With discount
-discountAmount = lineTotal × (discount_rate_percent / 100)
-subtotal = lineTotal - discountAmount
-
-// With VAT
-vatAmount = subtotal × (vat_rate_percent / 100)
-grandTotal = subtotal + vatAmount
-```
 
 ---
 
@@ -193,64 +113,9 @@ model StockMovement {
 
 ---
 
-## 🏷️ Categories & Units
-
-### Category Management
-
-```typescript
-// Category hierarchy
-Company → Category → SubCategory → Product
-
-// Example
-{
-  company: "ABC Electronics",
-  category: "Computers",
-  subCategory: "Laptops",
-  products: ["Dell XPS", "MacBook Pro", "HP Pavilion"]
-}
-```
-
-### Units of Measurement
-
-Units are managed in the dedicated [Unit Management Module](./unit.md). The inventory module uses units for product setup and reporting, while the unit module defines how each measurement label is stored and maintained.
-
-Common examples include:
-
-- piece (pcs)
-- kilogram (kg)
-- liter (L)
-- meter (m)
-- dozen (dz)
-- box
-- carton
-
-Example unit record:
-
-```typescript
-{
-  name: "kilogram",
-  conversion_base_unit: "gram"
-}
-```
-
----
-
 ## 🔄 Core Operations
 
-### 1. Create Product
-
-```typescript
-async function createProduct(data) {
-  // 1. Validate product data
-  // 2. Check SKU/Barcode uniqueness
-  // 3. Create product record
-  // 4. Create pricing record
-  // 5. Initialize stock for all branches (quantity = 0)
-  // 6. Return product with pricing
-}
-```
-
-### 2. Update Stock (After Purchase)
+### 1. Update Stock (After Purchase)
 
 ```typescript
 async function receiveStock(purchaseInvoiceItem) {
@@ -262,7 +127,7 @@ async function receiveStock(purchaseInvoiceItem) {
 }
 ```
 
-### 3. Reduce Stock (After Sale)
+### 2. Reduce Stock (After Sale)
 
 ```typescript
 async function reduceStock(salesInvoiceItem) {
@@ -275,7 +140,7 @@ async function reduceStock(salesInvoiceItem) {
 }
 ```
 
-### 4. Transfer Stock Between Branches
+### 3. Transfer Stock Between Branches
 
 ```typescript
 async function transferStock(fromBranch, toBranch, product, quantity) {
@@ -288,7 +153,7 @@ async function transferStock(fromBranch, toBranch, product, quantity) {
 }
 ```
 
-### 5. Stock Adjustment
+### 4. Stock Adjustment
 
 ```typescript
 async function adjustStock(branchId, productId, newQuantity, reason) {
@@ -374,22 +239,6 @@ async function adjustStock(branchId, productId, newQuantity, reason) {
 
 ## 📊 API Endpoints
 
-### Product Management
-
-- `GET /api/v1/products` - List all products
-- `GET /api/v1/products/:id` - Get product details
-- `POST /api/v1/products` - Create product
-- `PATCH /api/v1/products/:id` - Update product
-- `DELETE /api/v1/products/:id` - Delete product
-- `GET /api/v1/products/search` - Search products (SKU, barcode, name)
-
-### Category Management
-
-- `GET /api/v1/categories` - List categories
-- `POST /api/v1/categories` - Create category
-- `GET /api/v1/categories/:id/subcategories` - Get subcategories
-- `POST /api/v1/subcategories` - Create subcategory
-
 ### Stock Management
 
 - `GET /api/v1/stock` - List all stock (with filters)
@@ -423,13 +272,6 @@ async function adjustStock(branchId, productId, newQuantity, reason) {
 4. **Service Products**: No stock tracking for SERVICE type products
 5. **Inactive Products**: Cannot create new transactions for inactive products
 
-### Pricing Rules
-
-1. **Selling Price**: Must be >= purchase price (warning, not enforced)
-2. **Discount**: Only if `allow_discount = true`
-3. **VAT**: Applied based on product's `vat_rate_percent`
-4. **Effective Date**: Pricing effective from specified date
-
 ### Movement Rules
 
 1. **Audit Trail**: All stock changes must create movement record
@@ -456,12 +298,13 @@ async function adjustStock(branchId, productId, newQuantity, reason) {
 
 ## 📚 Related Documentation
 
+- [Product Management Module](./product.md)
+- [Unit Management Module](./unit.md)
 - [Sales Module](./sales.md)
 - [Purchase Module](./purchase.md)
-- [Unit Management Module](./unit.md)
 - [Database Schema](../database/schema-overview.md)
-- [API Documentation](../api/products-api.md)
+- [Inventory API](../api/inventory-api.md)
 
 ---
 
-**Last Updated:** December 31, 2025
+**Last Updated:** June 13, 2026

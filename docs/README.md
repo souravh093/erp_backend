@@ -28,7 +28,8 @@ Business module documentation
 
 - [Authentication & Authorization](./modules/authentication.md)
 - [Company & Branch Management](./modules/company-branch.md)
-- [Product & Inventory Management](./modules/inventory.md)
+- [Product Management](./modules/product.md)
+- [Inventory Management](./modules/inventory.md)
 - [Unit Management](./modules/unit.md)
 - [Purchase Management](./modules/purchase.md)
 - [Sales & POS Management](./modules/sales.md)
@@ -129,27 +130,31 @@ User management, roles, permissions, and access control
 
 Multi-tenant architecture with company and branch organization
 
-### 3. Product & Inventory Management
+### 3. Product Management
 
-Product catalog, categories, pricing, and stock tracking
+Product catalog, categories, units, pricing, and identity management
 
-### 4. Purchase Management
+### 4. Inventory Management
+
+Stock tracking, movements, reorder levels, and inventory reporting
+
+### 5. Purchase Management
 
 Purchase orders, invoices, supplier management
 
-### 5. Sales & POS Management
+### 6. Sales & POS Management
 
 Sales orders, invoices, customer management, POS operations
 
-### 6. Payment & Accounting
+### 7. Payment & Accounting
 
 Payment processing, journal entries, account ledgers
 
-### 7. Tax & VAT Management
+### 8. Tax & VAT Management
 
 Tax rate configuration and VAT transaction tracking
 
-### 8. Stock Movement
+### 9. Stock Movement
 
 Inventory tracking with reasons and references
 
@@ -161,7 +166,7 @@ Inventory tracking with reasons and references
 | ------------ | -------------- | ------------ |
 | Architecture | 🟡 In Progress | Dec 31, 2025 |
 | Database     | 🟡 In Progress | Dec 31, 2025 |
-| Modules      | 🟡 In Progress | Dec 31, 2025 |
+| Modules      | 🟡 In Progress | Jun 13, 2026 |
 | API          | ⚪ Planned     | -            |
 | Diagrams     | ⚪ Planned     | -            |
 | Deployment   | ⚪ Planned     | -            |

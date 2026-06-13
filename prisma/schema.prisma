@@ -262,6 +262,7 @@ model Product {
   purchaseInvoiceItems PurchaseInvoiceItem[]
   salesInvoiceItems    SalesInvoiceItem[]
 
+  @@index([sku, barcode])
   @@map("products")
 }
 
@@ -281,7 +282,7 @@ model ProductPricing {
   @@map("product_pricing")
 }
 
-model Stock { 
+model Stock {
   id               String   @id @default(uuid()) @db.Uuid
   current_quantity Int      @default(0)
   reorder_level    Int      @default(0)
