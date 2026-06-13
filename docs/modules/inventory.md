@@ -212,20 +212,24 @@ Company → Category → SubCategory → Product
 
 ### Units of Measurement
 
-```typescript
-// Common units
-- "piece" (pcs)
-- "kilogram" (kg)
-- "liter" (L)
-- "meter" (m)
-- "dozen" (dz)
-- "box"
-- "carton"
+Units are managed in the dedicated [Unit Management Module](./unit.md). The inventory module uses units for product setup and reporting, while the unit module defines how each measurement label is stored and maintained.
 
-// With conversion
+Common examples include:
+
+- piece (pcs)
+- kilogram (kg)
+- liter (L)
+- meter (m)
+- dozen (dz)
+- box
+- carton
+
+Example unit record:
+
+```typescript
 {
   name: "kilogram",
-  conversion_base_unit: "gram",  // 1 kg = 1000 g
+  conversion_base_unit: "gram"
 }
 ```
 
@@ -454,6 +458,7 @@ async function adjustStock(branchId, productId, newQuantity, reason) {
 
 - [Sales Module](./sales.md)
 - [Purchase Module](./purchase.md)
+- [Unit Management Module](./unit.md)
 - [Database Schema](../database/schema-overview.md)
 - [API Documentation](../api/products-api.md)
 

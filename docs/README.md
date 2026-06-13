@@ -29,6 +29,7 @@ Business module documentation
 - [Authentication & Authorization](./modules/authentication.md)
 - [Company & Branch Management](./modules/company-branch.md)
 - [Product & Inventory Management](./modules/inventory.md)
+- [Unit Management](./modules/unit.md)
 - [Purchase Management](./modules/purchase.md)
 - [Sales & POS Management](./modules/sales.md)
 - [Payment & Accounting](./modules/accounting.md)
