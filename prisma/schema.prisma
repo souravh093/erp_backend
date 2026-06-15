@@ -241,8 +241,8 @@ model Product {
   id                   String                @id @default(uuid()) @db.Uuid
   name                 String                @db.VarChar(255)
   description          String?               @db.Text
-  sku                  String?               @unique @db.VarChar(100)
-  barcode              String?               @unique @db.VarChar(100)
+  sku                  String?               @db.VarChar(100)
+  barcode              String?               @db.VarChar(100)
   unitId               String                @db.Uuid
   unit                 Unit                  @relation(fields: [unitId], references: [id], onDelete: Cascade)
   productType          ProductType           @default(GOODS)
@@ -262,6 +262,8 @@ model Product {
   purchaseInvoiceItems PurchaseInvoiceItem[]
   salesInvoiceItems    SalesInvoiceItem[]
 
+  @@unique([companyId, sku])
+  @@unique([companyId, barcode])
   @@index([sku, barcode])
   @@map("products")
 }
@@ -271,11 +273,11 @@ model ProductPricing {
   purchase_price        Float
   selling_price         Float
   vat_rate_percent      Int
-  discount_rate_percent Int      @default(0)
+  discount_rate_percent Int      @default(0) 
   productId             String   @unique @db.Uuid
   product               Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-  allow_discount        Boolean  @default(false)
-  effective_from        DateTime @default(now()) @db.Timestamptz(6)
+  allow_discount        Boolean  @default(false)   // 
+  effective_from        DateTime @default(now()) @db.Timestamptz(6) 
   createdAt             DateTime @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime @updatedAt @db.Timestamptz(6)
 

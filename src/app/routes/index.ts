@@ -9,6 +9,7 @@ import { branchRoutes } from '../modules/branch/branch.routes';
 import { categoryRoutes } from '../modules/category/category.routes';
 import { subCategoryRoutes } from '../modules/subCategory/subCategory.routes';
 import { unitRoutes } from '../modules/unit/unit.routes';
+import { ProductRoute } from '../modules/product/product.routes';
 
 const router = Router();
 
@@ -49,6 +50,10 @@ const moduleRoutes: TModuleRoute[] = [
     path: '/units',
     route: unitRoutes,
   },
+  {
+    path: "/products",
+    route: ProductRoute
+  }
 ];
 
 moduleRoutes.forEach((route) => {
