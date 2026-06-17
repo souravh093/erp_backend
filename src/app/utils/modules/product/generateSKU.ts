@@ -1,7 +1,6 @@
 import { prisma } from '../../../../db/db.config';
 
 export const generateSkuPrefix = (
-  productName: string,
   categoryName: string,
 ): string => {
   const category = categoryName
@@ -9,12 +8,7 @@ export const generateSkuPrefix = (
     .substring(0, 3)
     .toUpperCase();
 
-  const product = productName
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .substring(0, 4)
-    .toUpperCase();
-
-  return `${category}-${product}`;
+  return `${category}`;
 };
 
 export const generateUniqueSku = async (

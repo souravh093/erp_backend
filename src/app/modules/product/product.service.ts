@@ -18,7 +18,7 @@ const createProductIntoDB = async (payload: TProduct) => {
   if (!existingUnit) throw new AppError(404,'Unit not found');
   if (!existingCompany) throw new AppError(404,'Company not found');
 
-  const skuPrefix = generateSkuPrefix(payload.name, existingCategory.name);
+  const skuPrefix = generateSkuPrefix(existingCategory.name);
   const uniqueSku = await generateUniqueSku(skuPrefix, payload.companyId);
   const barcode = await generateBarcode(payload.companyId);
 
@@ -40,6 +40,7 @@ const createProductIntoDB = async (payload: TProduct) => {
             selling_price: payload.productPricing.selling_price,
             vat_rate_percent: payload.productPricing.vat_rate_percent,
             discount_rate_percent: payload.productPricing.discount_rate_percent,
+            allow_discount: payload.productPricing.discount_rate_percent > 0,
             effective_from: payload.productPricing.effective_from,
           },
         },

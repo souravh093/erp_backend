@@ -47,11 +47,11 @@ const moduleRoutes: TModuleRoute[] = [
     route: subCategoryRoutes,
   },
   {
-    path: '/units',
+    path: '/unit',
     route: unitRoutes,
   },
   {
-    path: "/products",
+    path: "/product",
     route: ProductRoute
   }
 ];
