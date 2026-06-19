@@ -7,11 +7,6 @@ export type TProduct = {
   categoryId: string;
   unitId: string;
   companyId: string;
-  stock: {
-    current_quantity: number;
-    reorder_level: number;
-    branchId: string;
-  };
   subCategoryId?: string;
   productPricing: {
     purchase_price: number;

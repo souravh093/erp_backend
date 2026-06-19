@@ -1,22 +1,36 @@
 import { prisma } from '../../../db/db.config';
+import {
+  buildPrismaQuery,
+  calculatePaginationMeta,
+  QueryParams,
+} from '../../builders/prismaBuilderQuery';
 import AppError from '../../errors/AppError';
 import { generateBarcode } from '../../utils/modules/product/generateBarcode';
 import {
   generateSkuPrefix,
   generateUniqueSku,
 } from '../../utils/modules/product/generateSKU';
-import { TProduct } from './product.type'; 
+import { TProduct } from './product.type';
 
 const createProductIntoDB = async (payload: TProduct) => {
   const [existingCategory, existingUnit, existingCompany] = await Promise.all([
-    prisma.category.findUnique({ where: { id: payload.categoryId }, select: { name: true } }),
-    prisma.unit.findUnique({ where: { id: payload.unitId }, select: { id: true } }),
-    prisma.company.findUnique({ where: { id: payload.companyId }, select: { id: true } }),
+    prisma.category.findUnique({
+      where: { id: payload.categoryId },
+      select: { name: true },
+    }),
+    prisma.unit.findUnique({
+      where: { id: payload.unitId },
+      select: { id: true },
+    }),
+    prisma.company.findUnique({
+      where: { id: payload.companyId },
+      select: { id: true },
+    }),
   ]);
 
-  if (!existingCategory) throw new AppError(404,'Category not found');
-  if (!existingUnit) throw new AppError(404,'Unit not found');
-  if (!existingCompany) throw new AppError(404,'Company not found');
+  if (!existingCategory) throw new AppError(404, 'Category not found');
+  if (!existingUnit) throw new AppError(404, 'Unit not found');
+  if (!existingCompany) throw new AppError(404, 'Company not found');
 
   const skuPrefix = generateSkuPrefix(existingCategory.name);
   const uniqueSku = await generateUniqueSku(skuPrefix, payload.companyId);
@@ -44,22 +58,62 @@ const createProductIntoDB = async (payload: TProduct) => {
             effective_from: payload.productPricing.effective_from,
           },
         },
-        stocks: {
-          create: {
-            current_quantity: payload.stock.current_quantity,
-            reorder_level: payload.stock.reorder_level,
-            branchId: payload.stock.branchId,
-          },
-        },
       },
       include: {
         productPricing: true,
         stocks: true,
-      }
+      },
     });
   });
 };
 
+const getAllProductsFromDB = async (query: QueryParams) => {
+  const { skip, take, where, orderBy, page } = buildPrismaQuery(query, {
+    searchFields: ['name', 'sku', 'barcode'],
+  });
+
+  const [totalItems, products] = await prisma.$transaction([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      skip,
+      take,
+      where,
+      orderBy,
+      include: {
+        productPricing: true,
+        stocks: true,
+      },
+    }),
+  ]);
+
+  return {
+    meta: calculatePaginationMeta(totalItems, page, take),
+    data: products,
+  };
+};
+
+const getProductByIdFromDB = async (
+  productId: string,
+  companyId: string,
+  branchId: string,
+) => {
+  const product = await prisma.product.findUniqueOrThrow({
+    where: { id: productId, companyId },
+    include: {
+      productPricing: true,
+      stocks: {
+        where: {
+          branchId,
+        }
+      },
+    },
+  });
+
+  return product;
+};
+
 export const productService = {
-    createProductIntoDB,
-}
+  createProductIntoDB,
+  getAllProductsFromDB,
+  getProductByIdFromDB,
+};

@@ -34,17 +34,6 @@ const createProductSchema = z.object({
         message: 'Selling price cannot be less than the purchase price',
         path: ['selling_price'],
       }),
-    stock: z.object({
-      current_quantity: z
-        .number()
-        .nonnegative('Current quantity cannot be negative')
-        .min(1, 'Current quantity must be at least 1'),
-      reorder_level: z
-        .number()
-        .nonnegative('Reorder level cannot be negative')
-        .min(1, 'Reorder level must be at least 1'),
-      branchId: z.string().min(1, 'Branch ID is required'),
-    }),
   }),
 });
 
